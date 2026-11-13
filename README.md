@@ -4,7 +4,7 @@
 
 | Final forecast record | |
 |---|---|
-| Status | FINAL - PENDING HUMAN APPROVAL |
+| Status | FINAL - APPROVED BY ALL FOUR MEMBERS |
 | Market and unit | S&P 500 price index (SPX), index points |
 | Target | 2026-11-20 official close (16:00 America/New_York) |
 | Information cutoff | 2026-11-13 12:00:00+00:00 UTC |
@@ -12,11 +12,11 @@
 | **Forecast** | **7,637.84** |
 | Reference source | S&P Dow Jones Indices official closing price-index level |
 | Discretionary adjustment | 0.00% |
-| Approved by | NOT YET APPROVED |
-| Record | `outputs/final/forecast_record.json`, SHA-256 0f853f203f89... |
+| Approved by | Layla Ahmed, Antonio Herrera Despradel, Jayen Rughani, Mohamed Derbala at 2026-11-13T15:05:55Z |
+| Record | `outputs/final/forecast_record.json`, SHA-256 71ae56994c3f... |
 
 
-The same value is on the cover of the report (`report/`). It was calculated with information available by **Fri 13 Nov 2026 12:00 UTC** (07:00 New York) only: every input carries its publication time and anything later is excluded by the code and tested.
+The same value is on the cover of the report (`report/`). It was calculated with information available by **Fri 13 Nov 2026 12:00 UTC** (07:00 New York) only: every input carries its publication time and anything later is excluded by the code and tested. The snapshot was downloaded at 14:29 UTC, after the cutoff, because the 5-minute futures bar ending at 07:00 New York exists only once the cutoff has passed; the filter keeps the bar ending at 12:00 UTC and drops the later ones (the leak test corrupts them and the inputs do not change).
 
 ## Check it in three steps
 
@@ -68,6 +68,7 @@ Forecast = last official close x exp(median six-session return since 1990 + over
 |---|---|---|---|---|
 | Package author's machine (as recorded 10 Nov) | 3.12.10 | 2.5.4 | 3.1.0 | 0.15.0 |
 | Clean rebuild from the repository, 13 Nov 2026 | 3.14.0 | 2.3.4 | 2.3.3 | 0.14.5 |
+| **Submitted final build**, 13 Nov 2026 (fresh install from `requirements.txt`) | 3.13.2 | 2.5.4 | 3.1.1 | 0.15.0 |
 
 Both gave the same forecast, drift and futures move, and `PASS_ALL = true`. Both: matplotlib 3.11.2, reportlab 5.1.0, python-docx 1.2.0, python-pptx 1.0.2. The clean rebuild also used openpyxl 3.1.5, pillow 13.0.0 and requests 2.32.5. The full list is in `requirements.txt`.
 

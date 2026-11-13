@@ -1,5 +1,8 @@
 # Agent run log
 
+> **Reading this log.** Entries are kept as written at the time. "Zaki's data" / `--zaki` is the group's Bloomberg export (a licensed data source supplied to the group, not a person or a member); it is not in this package. `data/raw_live/` was the 10 Nov preview snapshot, also not shipped (the final snapshot is `data/raw_final/`). `Jayen44/sp500-weekly-predictor` and the PR numbers refer to the group's private working repository, which also holds licensed data; this package is the clean copy of its final state.
+
+
 Agent: Claude Code, model `claude-sonnet-5-5`, supervised by a group member. Entries are in the order they happened. Raw tool outputs are saved under `outputs/` and `data/raw_live/`.
 
 ## Session 1 (28 Oct 2026) - first design, superseded
@@ -29,6 +32,6 @@ Chose the S&P 500 after asking the user; built the pipeline; first design used t
 | 19 | 12 Nov: brought the team's #20 (stop on stale futures bars, Bloomberg typed-in backup) and #22 (blind-marker fixes, news publication-time filter) into the local package; reviewed both. Found that the report build crashed in backup mode when the Yahoo futures file is missing, and that Table 1 would then name Yahoo as the futures source. | Fixed in `build_report.py` (optional futures file; Table 1 marks Yahoo as not used and adds the typed-in Bloomberg row). Tested: full public-data run (7,591.42 non-binding, PASS_ALL, 2,311 words, 5 slides); a final run stops on a stale bar; backup mode without the Yahoo file builds end to end with PASS_ALL. |
 | 20 | 13 Nov, after the cutoff: final run on a fresh install (`python code/run_all.py --final --fetch`, 14:29 UTC, public data only), then the offline rebuild, the evidence ZIP rebuilt in an empty folder, and the agent's `/check` plus one fault drill on the final record (`agent/demo_runs/20261113-*`). | Forecast **7,637.84** = 7,592.40 x exp(0.4004% + 0.1962%); the last futures bar used ends at 12:00 UTC. PASS_ALL true; `results.json` identical offline and from the ZIP. Agent: "submit", pending group approval; the planted +18.18-point error was caught ("do not submit as is"). A Bloomberg export gave 7,611.66 for the 12 Nov close against 7,592.40 at Cboe and Yahoo; left as is (public data only; the futures basis is consistent with 7,592.40). |
 
-## Open items a human must close
-* Compare the last close with the S&P DJI value; refresh `data/news_digest.json`; Mohamed confirms his AI-use line in `group_info.json`; sign `forecast_record.json` (`approved_by`).
-* Keep the Bloomberg workbook out of the ZIP and the repository (licence).
+## Items closed on 13 Nov
+* Last close: 7,592.40 (Cboe, Yahoo and same-day market reports agree). News digest kept as researched on 10 Nov (frozen before the cutoff). Mohamed's AI-use declaration is in `group_info.json`. All four members approved `forecast_record.json` (`approved_by`).
+* The Bloomberg workbook stays out of the ZIP and the repository (licence).

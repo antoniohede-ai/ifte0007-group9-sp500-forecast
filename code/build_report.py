@@ -125,7 +125,7 @@ def build(tag: str):
         f"The best-ranked candidate alone scored {f(top['MAPE_%'],3)}%.",
         f"**News enters through prices, not opinion.** The 07:00 New York futures price reflects the latest data, Fed and earnings news. In the group's pre-registered test on Bloomberg prices it cut six-session error from "
         f"{f(gB['mape_drift'],3)}% to {f(gB['mape_futures'],3)}% ({gB['n']} origins, t {f(gB['t'],2)}); a second test over {gJ['n']} origins finds the move carries through about one for one (slope {f(gJ['slope'],2)}).",
-        f"**Accuracy is mostly luck.** Typical error is {f(fin['median_APE_%'],1)}% (score about {f(fin['mean_score'],1)}/50); we claim a well-centred, reproducible number, not foresight."], True))
+        f"**Accuracy is mostly luck.** Typical (median) error is {f(fin['median_APE_%'],1)}%, which would score {f(50 - min(50, 5 * fin['median_APE_%']),1)}/50 (average backtest score {f(fin['mean_score'],1)}/50); we claim a well-centred, reproducible number, not foresight."], True))
     if not final and reh:
         B.append(("p", f"**Rehearsal result (a failure, reported).** With information to {cut_s} the pipeline forecast {f(F)} for {tgt}; the index closed at {f(reh)}. Error {f(R['rehearsal_APE_%'],2)}% "
                        f"(score {f(max(0, 50-5*R['rehearsal_APE_%']),2)}) against {f(R['rehearsal_APE_unchanged_%'],2)}% for unchanged and {f(R['rehearsal_APE_B1_%'],2)}% for median drift: the futures nowcast ({sgn(nc['nowcast_adjustment_pct'],2)}%) "
@@ -164,7 +164,7 @@ def build(tag: str):
 
     # ------------------------------------------------------------------ 3 news
     B.append(("h1", "3. Latest news and market regime", True))
-    B.append(("p", f"Researched on {NEWS['researched_utc']} from dated news pages and checked against saved prices ([data]). October ended with an AI-spending scare and a Federal Reserve leaning toward tightening; "
+    B.append(("p", f"Researched on {NEWS['researched_utc']} from dated news pages and checked against saved prices ([data]); the digest was frozen then, before the cutoff, and the 11-12 Nov moves enter only through the last close and the futures price. October ended with an AI-spending scare and a Federal Reserve leaning toward tightening; "
                    f"on the latest information the S&P 500 sits {f(abs(ctx['dd252_pct']),1)}% below its one-year high, 21-day realised volatility is {f(ctx['rv21_pct'],0)}% and VIX {f(vix_now,1)}. "
                    "Risk is two-sided: hawkish Fed and AI-capex doubts against sharp relief rallies.", True))
     rows = [[i["date"][5:].replace("-", "/"), i["event"], i["read"], i["src"]] for i in news_known(NEWS["items"], cutoff)][-5:]
@@ -175,7 +175,7 @@ def build(tag: str):
     # ------------------------------------------------------------------ 4 factors
     B.append(("h1", "4. Factor research and economic mechanism", True))
     B.append(("p", f"**Protocol (fixed before results).** Each candidate has an economic sign chosen in advance. For each, a walk-forward median (LAD) regression forecasts the deviation of the {h}-session return from median drift; "
-                   f"weekly origins from {W_['macro_start']} ({W_['n_valid']} validation origins to {W_['valid_end']}, then {W_['n_test']} test origins). It is eligible only if its fitted sign matches, the Diebold-Mariano t of its error against drift is at least 1.65 and a 2000-2012 long-history proxy "
+                   f"weekly origins from {W_['macro_start']} (up to {W_['n_valid']} validation origins to {W_['valid_end']}, fewer for the yield factors, whose public history starts later; then {W_['n_test']} test origins). It is eligible only if its fitted sign matches, the Diebold-Mariano t of its error against drift is at least 1.65 and a 2000-2012 long-history proxy "
                    f"does not contradict it (without a proxy: 2.33). With {len(scr_all)} tests about one false positive is expected at 1.65, hence the stricter bar.", True))
     MECH = {"mom252": "trends persist", "rev5": "short-term overreaction", "vrp": "insurance premium earned", "dvix5": "fear spikes fade",
             "dd252": "rebound after falls", "vixlvl": "fear premium", "d2y20": "policy tightening", "d10y20": "discount rate rises",
@@ -215,7 +215,7 @@ def build(tag: str):
     B.append(("bullets", [
         "*Decision:* fit by least absolute deviations, because score is linear in absolute percentage error and its optimal point forecast is the conditional median [Gneiting].",
         "*Decision (group review, 10 Nov):* freeze the model. The screen is reported but cannot change the forecast on submission day (kappa = 0), so the submitted method is exactly the reviewed one.",
-        f"*Correction:* reconciliation exposed a stale Cboe value and a faulty Yahoo value; a first solver was too slow and was replaced; a second code path (plain-Python median and nowcast, statsmodels QuantReg) reproduced the forecast (PASS_ALL = {chk['PASS_ALL']}).",
+        f"*Correction:* reconciliation exposed a stale Cboe value and three faulty Yahoo values (replaced by Cboe's, `data/price_corrections.json`); a first solver was too slow and was replaced; a second code path (plain-Python median and nowcast, statsmodels QuantReg) reproduced the forecast (PASS_ALL = {chk['PASS_ALL']}).",
     ], True))
     trace = [["Last official close S_t", f(S0), "Observed"], [f"Median {h}-session return m0 (all history)", f"{sgn(R['m0_pct'],3)}%", "Calculated"]]
     for s in sel:
@@ -236,7 +236,7 @@ def build(tag: str):
               "Table 6. Chronological out-of-sample errors", True))
     B.append(("p", f"**Reading the table.** Drift {drift_phrase} unchanged (test {f(b1['MAPE_%'],3)}% vs {f(b0['MAPE_%'],3)}%; validation {f(b1v['MAPE_%'],3)}% vs {f(b0v['MAPE_%'],3)}%): a small, regime-dependent edge. "
                    f"The best-ranked candidate ({f(top['MAPE_%'],3)}%) and the earlier trend-plus-VRP design ({f(v1['MAPE_%'],3)}%) do not earn a place. "
-                   f"The worst test errors were {'; '.join(f'{pd.Timestamp(w['date']):%d %b %Y} ({f(w['APE_final'],1)}%)' for w in R['worst_errors'][:3])}, all shocks the unchanged benchmark missed equally.", True))
+                   f"The worst backtest errors (validation and test) were {'; '.join(f'{pd.Timestamp(w['date']):%d %b %Y} ({f(w['APE_final'],1)}%)' for w in R['worst_errors'][:3])}, all shocks the unchanged benchmark missed equally.", True))
     own_txt = ""
     rev_txt = (f"The group's like-for-like review scored this exact rule at {gR['n']} Friday 07:00 New York origins ({gR['period']}): "
                f"{f(gR['mape_model'],3)}% against {f(gR['mape_drift'],3)}% for drift alone and {f(gR['mape_nochange'],3)}% for no change; "
@@ -271,9 +271,9 @@ def build(tag: str):
     rows = [[r["scenario"], f"{sgn(r['spx_shock_pct'],1)}%", f(r["vix"], 1), f(r["forecast"], 0), f"{f(100*(r['forecast']/F-1),1)}%"] for r in scen]
     B.append(("table", ["Scenario at the cutoff (labelled scenarios, not forecasts)", "Index move", "VIX", "Model level", "vs forecast"], rows, [8.2, 2.0, 1.5, 2.6, 2.7],
               "Table 8. Scenario analysis", True))
-    lo_cost = 5 * 100 * (1 - R["interval80"][0] / F)
+    lo_cost = 5 * 100 * (F / R["interval80"][0] - 1)   # brief: E = 100*|F-A|/A, score = 50 - 5E
     B.append(("p", f"**Adverse case.** The model has no crash protection: a further chip rout or a hawkish shock moves the forecast one-for-one with the index. The interval's lower end ({f(R['interval80'][0])}) is {f(100*(1-R['interval80'][0]/F),1)}% below the forecast, "
-                   f"an error costing {f(lo_cost,1)} marks; a 4% move, the 5 Nov size, costs 20.", True))
+                   f"an error of {f(lo_cost/5,2)}% of the actual close, costing {f(lo_cost,1)} marks; a 4% error, the 5 Nov size, costs 20.", True))
 
     # ------------------------------------------------------------------ 8 limitations
     B.append(("h1", "8. Limitations and counterarguments", True))

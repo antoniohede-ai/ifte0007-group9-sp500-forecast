@@ -223,7 +223,7 @@ def slide_charts(out, R, GT):
     ax.text(1.72, 1.0, "pass bar\nt = 1.65", color="#C77D14", fontsize=11, va="bottom")
     ax.set_xlabel("Validation t vs median drift (above 0 = better)", fontsize=12)
     ax.tick_params(axis="y", labelsize=11); ax.tick_params(axis="x", labelsize=11)
-    ax.set_title(f"{len(scr)} public-data factors: none clears the bar", fontsize=14, color="#0E2238", loc="left", fontweight="bold")
+    fig.suptitle(f"{len(scr)} public-data factors: none clears the bar", fontsize=14, color="#0E2238", x=0.02, ha="left", fontweight="bold")
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
     fig.tight_layout(); fig.savefig(figs / "slide_screen.png", dpi=200, facecolor="white"); plt.close(fig)
@@ -308,9 +308,9 @@ def build(tag: str):
     s.text(0.7, 1.2, 6.6, 3.0, ["An AI agent forecasts the S&P 500 close", {"text": f"for {tgt} {pd.Timestamp(R['target_date']).year}, scored on the S&P Dow Jones Indices official close", "size": 21, "color": PALE, "bold": False, "after": 0}], size=42, color=WHITE, bold=True)
     s.rect(7.9, 1.0, 4.75, 3.55, fill=WHITE, r=0.25)
     s.text(8.15, 1.2, 4.3, 0.4, "Point forecast, index points", 16, MUTED)
-    s.text(8.15, 1.75, 4.3, 1.3, f(F), 66, NAVY, True, anchor="m")
+    s.text(8.15, 1.75, 4.3, 1.3, f(F), 54, NAVY, True, anchor="m")
     s.text(8.15, 3.25, 4.3, 1.1, [f"80% interval {f(R['interval80'][0],0)} to {f(R['interval80'][1],0)}", "Only the point forecast is scored"], 16, INK)
-    chips = [("Last official close", last, f(S0)), ("Information cutoff", f"{cutoff:%d %b %H:%M} UTC ({ny:%H:%M} NY)", f"{fut_lab.capitalize()} {sgn(nc['overnight_return_pct'],2)}%"), ("Target close", tgt, f"h = {h} trading sessions")]
+    chips = [("Last official close", last, f(S0)), ("Information cutoff", f"{cutoff:%d %b, %H:%M} UTC", f"{ny:%H:%M} NY; futures {sgn(nc['overnight_return_pct'],2)}%"), ("Target close", tgt, f"h = {h} trading sessions")]
     for i, (a, b, c_) in enumerate(chips):
         x = 0.7 + i * 4.15
         s.rect(x, 4.95, 3.95, 1.35, fill="173A5C", r=0.18)
@@ -320,7 +320,8 @@ def build(tag: str):
     if status:
         s.rect(0.7, 6.55, 5.6, 0.5, fill=AMBER, r=0.1)
         s.text(0.9, 6.55, 5.3, 0.5, status + " Final run on 13 Nov.", 14, WHITE, True, anchor="m")
-    s.text(6.6, 6.62, 6.1, 0.4, "  |  ".join(m["name"] for m in GI["members"]), 12, PALE, align="r")
+    nx = 6.6 if status else 2.6
+    s.text(nx, 6.62, 12.7 - nx, 0.4, "  |  ".join(m["name"] for m in GI["members"]), 12, PALE, align="r")
     S.append(s)
 
     # 2 ------------------------------------------------------------------ the evidence: what predicts and what does not
@@ -329,7 +330,7 @@ def build(tag: str):
                      f"The group's {gS['tests']} pre-registered tests and the 1.72-million-combination search agree. Drift itself is only a weak edge over 'no change' (t {f(b1['DM_t_vs_B0'] or 0,2)}). "
                      f"The one input that adds information is the overnight futures move: in my pre-registered test on Bloomberg 07:00 prices it cut six-day error from {f(gB['mape_drift'],3)}% to {f(gB['mape_futures'],3)}% "
                      f"({gB['n']} origins, t {f(gB['t'],2)}; Thursdays t {f(gB['thu_t'],2)}), and Jayen's {gJ['n']}-origin test shows it carries through almost one for one (slope {f(gJ['slope'],2)}). Hand over to {who('Jayen')}.")
-    s.text(0.7, 0.4, 12, 0.9, "Drift is the anchor; only the futures move adds information", 32, NAVY, True)
+    s.text(0.7, 0.4, 12, 0.9, "Drift is the anchor; futures add the news", 32, NAVY, True)
     s.image(img_screen, 0.45, 1.25, 6.45)
     s.image(img_fut, 7.15, 1.25, 5.65)
     s.rect(7.15, 4.85, 5.65, 2.05, fill=TINT, r=0.2)
@@ -348,7 +349,7 @@ def build(tag: str):
                      f"Futures: E-mini futures trade nearly 24 hours, so they price overnight news; the move from {f(nc['es_close_prev_session'],2)} to {f(nc['es_at_cutoff'],2)} ({sgn(nc['overnight_return_pct'],2)}%), less the average overnight drift, gives {sgn(nc['nowcast_adjustment_pct'],2)}%. "
                      f"It fails on a contract roll, thin overnight trading or a reversal at the open. Sensitivity: the drift choice barely matters; dropping the nowcast moves the forecast to {f(fs['No futures nowcast']['forecast'],0)}. "
                      f"The 80% interval scales the historical error distribution by today's VIX. No hand adjustment. Hand over to {who('Layla')}.")
-    s.text(0.7, 0.4, 12, 0.9, f"The forecast: drift anchor plus the {fut_lab}", 32, NAVY, True)
+    s.text(0.7, 0.4, 12, 0.9, f"Forecast = drift + {fut_lab}", 32, NAVY, True)
     boxes = [(0.7, f(S0), f"last close ({last})", TINT, NAVY), (4.0, sgn(R["mu_final_pct"]) + "%", f"median {h}-session drift", TINT, NAVY), (7.3, sgn(nc["nowcast_adjustment_pct"]) + "%", fut_lab, TINT, NAVY), (10.6, f(F), "forecast", NAVY, WHITE)]
     for x, big, lab, bg, fg in boxes:
         s.rect(x, 1.3, 2.2, 1.45, fill=bg, r=0.2)
@@ -386,7 +387,7 @@ def build(tag: str):
                 "The agent writes its own plan, chooses its tools (record, recompute, check), reads each result and recommends: point at its Plan line, one tool call and its Found, Decision and Recommendation lines. "
                 f"Then the transcript on this slide is the pipeline it checked: `python code/run_all.py --{tag}` on the frozen inputs. "
                 if (ROOT / "code" / "demo_ui.py").exists() else
-                f"AGENT DEMO (about 90 seconds): play the recorded run of `python code/run_all.py --{tag}` on the saved, frozen inputs (it reproduces this exact forecast without internet, in about 1-2 minutes). ")
+                f"AGENT DEMO (about 90 seconds): in `python code/demo_ui.py`, replay the agent's /check on the final record (agent/demo_runs/, recorded 13 Nov): its plan, the tools it chooses, what each returns and its recommendation. The live version is slide 6. ")
     s = Slide(WHITE, f"[{who('Layla')} - 1:50] " + demo_txt +
                      "Walk the flow: the group set the goal and boundary; the agent fetched the data with fingerprints and applied the cutoff filter; it called Python to screen factors, fit the median regression and run the backtests; "
                      "it applied rules fixed in advance and logged every decision; a second code path and a leak test checked it; we approve and sign. Point at the transcript: the command, the frozen-model line and PASS_ALL. "
@@ -422,7 +423,7 @@ def build(tag: str):
     s.text(8.35, 4.4, 4.3, 2.45, [{"text": "From agent_log.md", "size": 16, "bold": True, "color": NAVY, "after": 4},
                                   {"text": "Correction: 3 faulty Yahoo prices replaced after a Yahoo / Cboe / workbook check.", "after": 4},
                                   {"text": "Decision: model frozen after group review; the screen is reported, never acted on.", "after": 4},
-                                  {"text": f"Demo (90 s): recorded run of python code/run_all.py --{tag} on the saved inputs; link in the speaker notes.", "bold": True}], 14, INK)
+                                  {"text": "Demo (90 s): replay of the agent's /check on the final record (agent/demo_runs/); live on slide 6.", "bold": True}], 14, INK)
     S.append(s)
 
     # 5 ------------------------------------------------------------------ risks, counterargument, claim
@@ -463,7 +464,7 @@ def build(tag: str):
         drills = demo_rehearsal()
         kinds = {"forecast": "forecast", "close": "last close", "cutoff": "cutoff"}
         caught = [kinds.get(v, v) for v, ok_ in drills if ok_]
-        reh6 = (f"In rehearsal on the frozen inputs it caught {len(caught)} of {len(drills)} planted errors ({', '.join(sorted(set(caught)))})."
+        reh6 = (f"Saved tests (preview and final data): {len(caught)} of {len(drills)} caught."
                 if drills else "Rehearse once before the talk; each run is saved for replay.")
         s = Slide(WHITE, f"[{who('Jayen')} - Q&A, about 1 to 2 minutes] LIVE AGENT DEMO, in addition to the recorded run on slide 4. Start `python code/demo_ui.py` in an unzipped copy of the package before the talk and open http://127.0.0.1:8765. "
                          "1) Press Run /check: the agent writes its own plan, chooses its tools (typically a recalculation and the independent check), reads each result and recommends; point at its Plan line, a tool call and its Found and Decision lines (about 30 seconds). "
@@ -472,7 +473,7 @@ def build(tag: str):
                          f"Say what is live and what is fixed: the data, the tools' code and the rules are fixed; the plan, the tool choices, the numbers it computes, its words and its verdict happen live. {reh6} "
                          "If the connection fails, switch to Replay and play a saved run: the brief allows a recorded walkthrough. The agent cannot write files or change the record; a member signs.")
         s.text(0.7, 0.4, 12, 0.9, "Live in Q&A: our agent re-checks the forecast", 32, NAVY, True)
-        s.text(0.7, 1.15, 12, 0.5, "Claude Code on the frozen inputs. It plans its own check, chooses its tools and recommends. We decide.", 17, MUTED)
+        s.text(0.7, 1.15, 12, 0.5, "Claude Code plans its own check on the frozen inputs and recommends; we decide.", 17, MUTED)
         cards = [("1  Its own check", "about 30 s", "/check: the agent writes a plan, picks its tools (record, recompute, check...), reads each result and recommends submit or not."),
                  ("2  Hidden fault", "about 40 s", f"The page plants one error in a copy of the record: forecast, last close or cutoff. Nobody knows which. Does the agent catch it? {reh6}"),
                  ("3  Your question", "about 30 s", "Ask anything about the forecast. The agent chooses its own tools and what-if values, then answers.")]

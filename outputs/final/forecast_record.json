@@ -1,5 +1,5 @@
 {
-  "status": "FINAL - PENDING HUMAN APPROVAL",
+  "status": "FINAL - APPROVED BY ALL FOUR MEMBERS",
   "market": "S&P 500 price index (SPX)",
   "unit": "index points",
   "target": "2026-11-20 official close (16:00 America/New_York)",
@@ -14,10 +14,10 @@
   "reference_source": "S&P Dow Jones Indices official closing price-index level",
   "discretionary_adjustment_pct": 0.0,
   "approved_by": [
-    "",
-    "",
-    "",
-    ""
+    "Layla Ahmed",
+    "Antonio Herrera Despradel",
+    "Jayen Rughani",
+    "Mohamed Derbala"
   ],
-  "approval_utc": ""
+  "approval_utc": "2026-11-13T15:05:55Z"
 }
