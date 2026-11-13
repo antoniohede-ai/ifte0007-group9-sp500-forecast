@@ -61,8 +61,8 @@ OPT_RE = re.compile(r"^(drift=(median|mean|none|fixed|(median|mean):(19[5-9]\d|2
 
 # ---------------------------------------------------------------------------------------------- data
 def mode_name(mode=None):
-    m = (mode or os.environ.get("DEMO_MODE") or "demo").lower()
-    return m if m in ("demo", "full") else "demo"
+    m = (mode or os.environ.get("DEMO_MODE") or "frozen").lower()
+    return m if m in ("frozen", "demo", "full") else "frozen"
 
 
 def ctx(tag=None, mode=None):
@@ -75,7 +75,8 @@ def ctx(tag=None, mode=None):
     rec = json.loads(rec_path.read_text(encoding="utf-8"))
     R = json.loads((out / "results.json").read_text(encoding="utf-8"))
     ref_cut = pd.Timestamp(rec["information_cutoff_utc"]).tz_convert("UTC")
-    fresh = (fresh_dir / "manifest.json").exists() and (fresh_dir / "gspc_daily.json").exists()
+    # FROZEN never reads a fresh pull: the saved snapshot only, as the brief's demo requires
+    fresh = mode != "frozen" and (fresh_dir / "manifest.json").exists() and (fresh_dir / "gspc_daily.json").exists()
     got = None
     if fresh:
         got = pd.Timestamp(json.loads((fresh_dir / "manifest.json").read_text(encoding="utf-8"))["retrieved_utc"]).tz_convert("UTC")
@@ -210,6 +211,9 @@ def banner(c):
     if c["mode"] == "full":
         return (f"MODE: FULL - all data up to {c['cut']:%a %d %b %H:%M} UTC (fresh pull {c['got']:%d %b %H:%M:%S} UTC). "
                 "No information cutoff: a look-ahead, NON-BINDING, the signed forecast is unchanged.")
+    if c["mode"] == "frozen":
+        return (f"MODE: FROZEN - the saved snapshot {c['frozen'].name} only (no network), "
+                f"information cutoff {c['cut']:%a %d %b %H:%M} UTC.")
     if c["fresh"]:
         return (f"MODE: DEMO - fresh pull {c['got']:%d %b %H:%M:%S} UTC, information cutoff {c['cut']:%a %d %b %H:%M} UTC applied "
                 "(later rows are dropped).")
@@ -302,7 +306,8 @@ def cmd_check(c):
         print("check is not available in Full mode: independent_check.py re-tests one frozen, cutoff-bound run. Use recompute and compare instead.")
         return
     print(banner(c))
-    print(f"independent_check.py runs on the record's own frozen snapshot ({c['frozen'].name}); `compare` tests the fresh pull against it.")
+    print(f"independent_check.py runs on the record's own frozen snapshot ({c['frozen'].name})"
+          + ("." if c["mode"] == "frozen" else "; `compare` tests the fresh pull against it."))
     r = subprocess.run([sys.executable, str(ROOT / "code" / "independent_check.py"), "--snapshot", str(c["frozen"].relative_to(ROOT)), "--tag", c["tag"]],
                        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
@@ -526,7 +531,9 @@ def cmd_compare(c):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["fetch", "compare", "record", "recompute", "check", "data", "explain", "whatif"])
-    ap.add_argument("--mode", choices=["demo", "full"], help="demo: information cutoff applies; full: all data to now (default: env DEMO_MODE, else demo)")
+    ap.add_argument("--mode", choices=["frozen", "demo", "full"],
+                    help="frozen: the saved snapshot only, no network (default); demo: fresh pull, information cutoff applies; "
+                         "full: all data to now, non-binding (default: env DEMO_MODE, else frozen)")
     ap.add_argument("args", nargs="*", help="for data: spx|es; for explain: an item; for whatif: one or more changes")
     ap.add_argument("--tag", choices=["final", "preview", "rehearsal"])
     a = ap.parse_args()
@@ -541,6 +548,10 @@ def main():
 
 
 def run_cmd(a, c):
+    if c["mode"] == "frozen" and a.cmd in ("fetch", "compare"):
+        print(f"FROZEN mode uses only the saved snapshot ({c['frozen'].name}); there is no network access, so `{a.cmd}` is not available. "
+              "Everything else (record, recompute, check, data, explain, whatif) runs on the frozen inputs.")
+        return
     if a.cmd == "fetch":
         cmd_fetch(c)
     elif a.cmd == "compare":

@@ -15,6 +15,6 @@ $CHECKLINE
 - reading files in this folder.
 
 A good check establishes three things: which record and data are being checked and that nothing after the cutoff was used (or, in Full mode, exactly what came after it); that the forecast can be reproduced independently; and whether anything looks wrong, and what it would mean. You decide how to establish them.
-Start with one line "Plan:" naming the tools you will use, in order, and why. Begin with `fetch` so the data is fresh. Use at most five tool calls. Change your plan if a result surprises you, and say so.
+Start with one line "Plan:" naming the tools you will use, in order, and why. $START Use at most five tool calls. Change your plan if a result surprises you, and say so.
 Narrate for an audience. Before each tool call write one line starting "Checking:" (what and why). If you expect a particular result, first write "Expect:" with a rough number. After each call write "Found:" (the key number), then "Expectation:" if you made one (right or wrong), then "Decision:" (what you will do next and why). If anything does not match, say what it could mean before you decide. Each line under 25 words. No tables, no headings, no bold.
 $FINISH

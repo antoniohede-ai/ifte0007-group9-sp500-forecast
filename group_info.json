@@ -24,8 +24,8 @@
     {
       "name": "Mohamed Derbala",
       "id": "26077489",
-      "responsibilities": "Momentum + RSI machine-learning model (80/20 split), five-session forecasts",
-      "checks": "Reproducible scripts; robustness note on technical indicators"
+      "responsibilities": "Momentum + RSI machine-learning model (chronological 80/20 split) and five-session forecast-versus-actual backtests, a robustness comparison with the selected method; analysis of candidate factor changes; charts and presentation material",
+      "checks": "Compared forecasts with actual S&P 500 values on the time-ordered test split and reported the errors; tested whether RSI improved momentum; reproducible scripts; robustness note on technical indicators"
     }
   ],
   "ai_tools": [

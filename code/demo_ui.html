@@ -174,7 +174,7 @@
 <footer>
   <div class="row">
     <div class="seg"><button id="mLive" class="on">Live</button><button id="mReplay">Replay</button></div>
-    <div class="seg dm" id="dmSeg" title="Demo: the agent pulls fresh data and the information cutoff applies (13 Nov 12:00 UTC). Full: the agent pulls everything up to now, no cutoff, non-binding look-ahead."><button id="dmDemo" data-dm="demo" class="on">Demo</button><button id="dmFull" data-dm="full">Full</button></div>
+    <div class="seg dm" id="dmSeg" title="Frozen: the saved snapshot only, no internet (the brief's demo). Demo: the agent pulls fresh data and the information cutoff applies (13 Nov 12:00 UTC). Full: the agent pulls everything up to now, no cutoff, non-binding look-ahead."><button id="dmFrozen" data-dm="frozen" class="on">Frozen</button><button id="dmDemo" data-dm="demo">Demo</button><button id="dmFull" data-dm="full">Full</button></div>
     <span id="liveRow1" class="row">
       <button class="primary" id="runCheck" title="The agent checks the record in three steps">Run /check</button>
       <button class="drill" id="runDrill" title="Plants an error in a copy of the record; the agent is not told">Fault drill</button>
@@ -210,7 +210,7 @@ const LABELS = [["would change my mind", "Would change my mind", "change"], ["re
   .map(([w, lab, cls]) => [new RegExp("^" + w + SEP, "i"), lab, cls]);
 const STAGES = ["goal", "data", "tools", "decisions", "checks", "human"];
 const $ = id => document.getElementById(id);
-const S = { es: null, mode: "live", depth: "fast", running: false, tools: {}, blocks: {}, meta: null, t0: 0, speed: 1, tick: null, model: "", nTools: 0, fs: 16, dm: "demo" };
+const S = { es: null, mode: "live", depth: "fast", running: false, tools: {}, blocks: {}, meta: null, t0: 0, speed: 1, tick: null, model: "", nTools: 0, fs: 16, dm: "frozen" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const mark = s => esc(s)
@@ -303,7 +303,7 @@ function handle(ev) {
     case "meta": {
       S.meta = ev; S.model = ev.model || "";
       const replay = ev.mode === "replay";
-      $("mode").textContent = replay ? (ev.sample ? "REPLAY · SAMPLE" : "REPLAY · RECORDED") : (ev.cmd === "drill" ? "LIVE · FAULT DRILL" : "LIVE · " + (ev.dm === "full" ? "FULL" : "DEMO"));
+      $("mode").textContent = replay ? (ev.sample ? "REPLAY · SAMPLE" : "REPLAY · RECORDED") : (ev.cmd === "drill" ? "LIVE · FAULT DRILL" : "LIVE · " + (ev.dm === "full" ? "FULL" : ev.dm === "demo" ? "DEMO" : "FROZEN"));
       $("mode").className = "badge " + (replay ? "replay" : (ev.cmd === "drill" ? "drill" : "live"));
       if (ev.note) add(head("About this recording", t) + `<div>${esc(ev.note)}</div>`, "plain");
       if (ev.drill) add(head("Fault drill", t, '<span class="tag preset">Planted by the page</span>') + (ev.drill.what
@@ -435,8 +435,9 @@ async function load() {
   $("record").innerHTML = r.error ? `<span class="bad">${esc(r.error)}</span>` :
     `<div class="big">${Number(r.forecast).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div><div class="meta">${esc(r.status)}<br>Cutoff ${esc(r.cutoff)}<br>Snapshot <code>${esc(r.snapshot)}</code><br>SHA-256 ${esc(r.sha12)}&hellip;</div>`;
   const full = S.dm === "full";
-  $("sub").textContent = "S&P 500 official close, Fri 20 Nov 2026 \u00b7 " + (full ? "all data to now, no cutoff \u00b7 non-binding look-ahead" : "fresh public data \u00b7 cutoff 13 Nov 12:00 UTC applied");
-  $("dataSub").textContent = full ? "fresh pull, no cutoff" : "fresh pull, cutoff applied";
+  const frozen = S.dm === "frozen";
+  $("sub").textContent = "S&P 500 official close, Fri 20 Nov 2026 \u00b7 " + (full ? "all data to now, no cutoff \u00b7 non-binding look-ahead" : frozen ? "frozen inputs \u00b7 cutoff 13 Nov 12:00 UTC \u00b7 no internet" : "fresh public data \u00b7 cutoff 13 Nov 12:00 UTC applied");
+  $("dataSub").textContent = full ? "fresh pull, no cutoff" : frozen ? "frozen snapshot, no internet" : "fresh pull, cutoff applied";
   $("runDrill").disabled = full; $("runDrill").title = full ? "The fault drill tests the signed record under the cutoff: Demo mode only" : $("runDrill").title;
   $("chips").innerHTML = Object.keys(info.whatif).map(o => `<button class="chip" data-o="${o}" title="${esc(info.whatif[o])}">${CHIP[o] || o}</button>`).join("");
   document.querySelectorAll(".chip").forEach(b => b.onclick = () => start(liveUrl("whatif", "&opt=" + encodeURIComponent(b.dataset.o))));
@@ -454,8 +455,8 @@ function setDepth(d) { S.depth = d; $("dFast").classList.toggle("on", d === "fas
 function setFs(px) { S.fs = Math.max(12, Math.min(24, px)); document.documentElement.style.setProperty("--fs", S.fs + "px"); try { localStorage.setItem("demo_fs", S.fs); } catch (e) {} }
 
 $("mLive").onclick = () => setMode("live"); $("mReplay").onclick = () => setMode("replay");
-function setDm(m) { S.dm = m; $("dmDemo").classList.toggle("on", m === "demo"); $("dmFull").classList.toggle("on", m === "full"); load(); }
-$("dmDemo").onclick = () => setDm("demo"); $("dmFull").onclick = () => setDm("full");
+function setDm(m) { S.dm = m; $("dmFrozen").classList.toggle("on", m === "frozen"); $("dmDemo").classList.toggle("on", m === "demo"); $("dmFull").classList.toggle("on", m === "full"); load(); }
+$("dmFrozen").onclick = () => setDm("frozen"); $("dmDemo").onclick = () => setDm("demo"); $("dmFull").onclick = () => setDm("full");
 $("dFast").onclick = () => setDepth("fast"); $("dDeep").onclick = () => setDepth("deep");
 $("runCheck").onclick = () => start(liveUrl("check"));
 $("runDrill").onclick = () => start(liveUrl("drill"));

@@ -50,7 +50,7 @@ Step 3 overwrites files in this folder, so run it in a copy. The rehearsal (cuto
 
 ## Watch the agent work (optional, no account needed)
 
-`python code/demo_ui.py`, then open http://127.0.0.1:8765 and choose **Replay**. It plays back saved runs of the research agent (Claude Code) checking the forecast: its plan, the tools it chooses, what each returns, its reasoning and its recommendation. Each replay shows when it was recorded; runs dated before 13 Nov used the earlier 10 Nov preview data and show a different forecast. A live run needs Claude Code signed in; `agent/DEMO_README.md` explains both. The agent's tools are `code/demo_tools.py` (read-only; it never changes the record).
+`python code/demo_ui.py`, then open http://127.0.0.1:8765 and choose **Replay**. It plays back saved runs of the research agent (Claude Code) checking the forecast: its plan, the tools it chooses, what each returns, its reasoning and its recommendation. Each replay shows when it was recorded; runs dated before 13 Nov used the earlier 10 Nov preview data and show a different forecast. A live run needs Claude Code signed in and uses **Frozen** mode by default: the agent works only on the saved snapshot in `data/raw_final/` with no internet, as the brief asks (*demonstrate the agent using frozen inputs*). The optional Demo and Full modes pull fresh public data; Full is a non-binding look-ahead. `agent/DEMO_README.md` explains all of this. The agent's tools are `code/demo_tools.py` (read-only; it never changes the record).
 
 ## What the method does
 

@@ -22,11 +22,13 @@ Then open http://127.0.0.1:8765. It needs only the Python standard library plus 
 | **Live: Ask** | Same | Type any question. The agent chooses its own tools and what-if values (at most four calls) |
 | **Live: What if** | Same | The presenter picks a change; the agent predicts the effect, tests it and explains |
 
-## Two data modes (the **Demo / Full** switch next to Live / Replay)
+## Three data modes (the **Frozen / Demo / Full** switch next to Live / Replay)
 
-In both modes the agent starts by calling `fetch`, which downloads fresh public data at that moment: Yahoo `^GSPC` daily closes, Yahoo `ES=F` 5-minute bars and Cboe's published SPX history (about 8 s, internet needed). Nothing else is contacted, and it writes only to `data/agent_demo/` or `data/agent_full/` (git-ignored, never in the evidence ZIP).
+**Frozen** is the default and the mode for the formal presentation: the brief asks for the agent to be demonstrated *using frozen inputs*. The agent works only on the saved snapshot in `data/raw_final/` (the inputs of the submitted forecast), has no `fetch` or `compare` tool and no network access, and every number must MATCH the signed record. `python code/demo_tools.py <tool>` uses Frozen unless `--mode` says otherwise.
 
-| | **Demo** (default) | **Full** |
+The two optional modes below pull fresh data. In both, the agent starts by calling `fetch`, which downloads fresh public data at that moment: Yahoo `^GSPC` daily closes, Yahoo `ES=F` 5-minute bars and Cboe's published SPX history (about 8 s, internet needed). Nothing else is contacted, and it writes only to `data/agent_demo/` or `data/agent_full/` (git-ignored, never in the evidence ZIP).
+
+| | **Demo** (optional) | **Full** (optional; keep out of the formal talk) |
 |---|---|---|
 | Information cutoff | Applies: **Fri 13 Nov 2026 12:00 UTC** (07:00 New York). Everything published later is dropped and counted | None: all data up to the moment of the fetch |
 | Purpose | Shows the agent retrieving the data and re-deriving the forecast under the brief's rules; with the final record present, the numbers must MATCH it | A look-ahead: what the same frozen model gives on everything known now, what moved since the cutoff, and (after 20 Nov) the error against the realised close |

@@ -165,7 +165,7 @@ def build(tag: str):
 
     # ------------------------------------------------------------------ 3 news
     B.append(("h1", "3. Latest news and market regime", True))
-    B.append(("p", f"Researched on {NEWS['researched_utc']} from dated news pages and checked against saved prices ([data]); the digest was frozen then, before the cutoff, and the 11-12 Nov moves enter only through the last close and the futures price. October ended with an AI-spending scare and a Federal Reserve leaning toward tightening; "
+    B.append(("p", f"Researched on {NEWS['researched_utc']} from dated news pages and checked against saved prices (marked [data]); the digest was frozen then, before the cutoff, and the 11-12 Nov moves enter only through the last close and the futures price. October ended with an AI-spending scare and a Federal Reserve leaning toward tightening; "
                    f"on the latest information the S&P 500 sits {f(abs(ctx['dd252_pct']),1)}% below its one-year high, 21-day realised volatility is {f(ctx['rv21_pct'],0)}% and VIX {f(vix_now,1)}. "
                    "Risk is two-sided: hawkish Fed and AI-capex doubts against sharp relief rallies.", True))
     rows = [[i["date"][5:].replace("-", "/"), i["event"], i["read"], i["src"]] for i in news_known(NEWS["items"], cutoff)][-5:]
@@ -175,8 +175,8 @@ def build(tag: str):
 
     # ------------------------------------------------------------------ 4 factors
     B.append(("h1", "4. Factor research and economic mechanism", True))
-    B.append(("p", f"**Protocol (fixed before results).** Each candidate has an economic sign chosen in advance. For each, a walk-forward median (LAD) regression forecasts the deviation of the {h}-session return from median drift; "
-                   f"weekly origins from {W_['macro_start']} (up to {W_['n_valid']} validation origins to {W_['valid_end']}, fewer for the yield factors, whose public history starts later; then {W_['n_test']} test origins). It is eligible only if its fitted sign matches, the Diebold-Mariano t of its error against drift is at least 1.65 and a 2000-2012 long-history proxy "
+    B.append(("p", f"**Protocol (fixed before results).** Each candidate has an economic sign chosen in advance. For each, a walk-forward median regression (Koenker and Bassett, 1978) forecasts the deviation of the {h}-session return from median drift; "
+                   f"weekly origins from {W_['macro_start']} (up to {W_['n_valid']} validation origins to {W_['valid_end']}, fewer for the yield factors, whose public history starts later; then {W_['n_test']} test origins). It is eligible only if its fitted sign matches, the Diebold and Mariano (1995) t of its error against drift is at least 1.65 and a 2000-2012 long-history proxy "
                    f"does not contradict it (without a proxy: 2.33). With {len(scr_all)} tests about one false positive is expected at 1.65, hence the stricter bar.", True))
     MECH = {"mom252": "trends persist", "rev5": "short-term overreaction", "vrp": "insurance premium earned", "dvix5": "fear spikes fade",
             "dd252": "rebound after falls", "vixlvl": "fear premium", "d2y20": "policy tightening", "d10y20": "discount rate rises",
@@ -192,7 +192,7 @@ def build(tag: str):
     if sel and not frozen:
         B.append(("p", "**Selected factors.** " + "; ".join(f"**{R['labels'][s]}** ({R['formulas'][s]}; source {R['sources'][s]}; expected sign {'+' if R['expected_sign'][s] > 0 else '-'})" for s in sel) + ".", True))
     else:
-        B.append(("p", f"**Result: {'no candidate beyond the two model factors survives' if not rule_sel else 'no further factor is used'}.** Over {h} sessions none reliably beat drift out of sample, in line with Welch and Goyal and with Campbell and Thompson. The group agrees: {gS['tests']} pre-registered tests "
+        B.append(("p", f"**Result: {'no candidate beyond the two model factors survives' if not rule_sel else 'no further factor is used'}.** Over {h} sessions none reliably beat drift out of sample, in line with Welch and Goyal (2008) and Campbell and Thompson (2008). The group agrees: {gS['tests']} pre-registered tests "
                        f"(hurdle t {f(gS['hurdle_t'],2)}) passed none, and the {GT['search']['combinations']}-combination search's best model lost to plain drift on unseen data." + wb_txt2, True))
     B.append(("table", ["Specification", "D: equity risk premium (median drift)", "N: overnight futures move"], [
         ["Formula", f"median of ln(S[t+{h}]/S[t]) over all realised windows", "ln(ES at cutoff / ES at 16:00 New York close) minus its average"],
@@ -200,7 +200,7 @@ def build(tag: str):
         ["Publication time", "16:00 New York, each session", f"continuous; read at the cutoff ({ny_hhmm} New York)"],
         ["Frequency / lookback", "daily; expanding window since 1990", "intraday; since the last cash close"],
         ["Expected sign", "+ (paid for bearing equity risk)", "+, one for one (group test slope " + f(gJ['slope'], 2) + ")"],
-        ["Mechanism", "risk premium; negative skew lifts the median above zero", "futures lead index price discovery [Hasbrouck] and price overnight news; arbitrage ties the cash open to them"],
+        ["Mechanism", "risk premium; negative skew lifts the median above zero", "futures lead index price discovery (Hasbrouck, 2003) and price overnight news; arbitrage ties the cash open to them"],
         ["Fails when", "prolonged bear markets (2000-02, 2008)", "contract roll, thin overnight trading, reversal at the open"]],
         [3.3, 6.7, 7.0], "Table 4. The two model factors as computable variables", True))
     B.append(("p", "**Why these two.** The last close prices news up to 16:00 New York; E-mini futures trade overnight, so their move to 07:00 "
@@ -214,7 +214,7 @@ def build(tag: str):
                    "Members re-run the code, read the trace and approve the record."
                    + (" The agent's own check of the record (plan, tool calls, verdict) is saved in agent/demo_runs/." if list((ROOT / "agent" / "demo_runs").glob("*_check*.jsonl")) else ""), True))
     B.append(("bullets", [
-        "*Decision:* fit by least absolute deviations, because score is linear in absolute percentage error and its optimal point forecast is the conditional median [Gneiting].",
+        "*Decision:* fit by least absolute deviations, because score is linear in absolute percentage error and its optimal point forecast is the conditional median (Gneiting, 2011).",
         "*Decision (group review, 10 Nov):* freeze the model. The screen is reported but cannot change the forecast on submission day (kappa = 0), so the submitted method is exactly the reviewed one.",
         f"*Correction:* reconciliation exposed a stale Cboe value and three faulty Yahoo values (replaced by Cboe's, `data/price_corrections.json`); a first solver was too slow and was replaced; a second code path (plain-Python median and nowcast, statsmodels QuantReg) reproduced the forecast (PASS_ALL = {chk['PASS_ALL']}).",
     ], True))
@@ -230,7 +230,7 @@ def build(tag: str):
     # ------------------------------------------------------------------ 6 validation
     B.append(("h1", "6. Validation and benchmark", True))
     B.append(("p", f"**Design.** Weekly origins on the final origin's weekday, {W_['first_origin']} to {W_['last_origin']} ({W_['n_origins']}), h = {h}; parameters use only rows whose target was already realised. "
-                   f"Benchmarks: B0 unchanged, B1 median drift. Loss: score = 50 - min(50, 5 x APE). Price factors train on up to 36 years, macro series on the workbook history (from 2015).", True))
+                   f"Benchmarks: B0 unchanged, B1 median drift. Loss: score = 50 - min(50, 5 x APE). Price factors train on up to 36 years, " + ("macro series on the workbook history (from 2015)." if wb_dates else "macro and cross-asset series on their public history."), True))
     labs = {n_b0: "B0 unchanged", n_b1: "B1 median drift", n_top: "Best-ranked candidate alone", n_v1: "Trend + VRP (earlier design)", n_fin: ("**Final: drift (+ nowcast, validated below)**" if not sel else "**Final model**")}
     rows = [[labs[k], f(pt[k]["MAPE_%"], 3), f(pv[k]["MAPE_%"], 3), f(pt[k]["mean_score"], 2), f(pt[k]["worst_APE_%"], 1), "-" if k == n_b0 else f(pt[k]["DM_t_vs_B0"], 2)] for k in names[:5]]
     B.append(("table", ["Model", f"Test MAPE % (n={W_['n_test']})", f"Validation MAPE % (n={W_['n_valid']})", "Test mean score /50", "Worst test APE %", "DM t vs B0 (test)"], rows, [4.8, 2.6, 2.9, 2.4, 2.1, 2.3],
@@ -255,7 +255,7 @@ def build(tag: str):
     asia_txt = "Only about two months of 5-minute futures exist, so this is suggestive, not conclusive."
     if ap_.exists():
         AR = json.loads(ap_.read_text(encoding="utf-8")); A_, C_ = AR["A_1997-2026"], AR["C"]
-        asia_txt = (f"Over 30 years Asian markets' overnight move explains {f(100*A_['r2'],1)}% of the next US day ({A_['n']:,} days), the spillover documented by [Hamao], but adds nothing once futures are known.")
+        asia_txt = (f"Over 30 years Asian markets' overnight move explains {f(100*A_['r2'],1)}% of the next US day ({A_['n']:,} days), the spillover documented by Hamao, Masulis and Ng (1990), but adds nothing once futures are known.")
     B.append(("p", f"**Futures evidence (group tests).** A pre-registered test on Bloomberg 07:00 New York futures prices ({gB['n']} origins, {gB['period']}) cut six-session error from {f(gB['mape_drift'],3)}% (drift alone) to {f(gB['mape_futures'],3)}% "
                    f"(t {f(gB['t'],2)}, below its pre-set hurdle of {f(gB.get('hurdle_t',3.16),2)}, adopted on the pre-set rule of a gain in both halves; Thursdays {f(gB['thu_mape_drift'],3)}% to {f(gB['thu_mape_futures'],3)}%, t {f(gB['thu_t'],2)}). A second test over {gJ['n']} origins ({gJ['period']}) finds a slope of {f(gJ['slope'],2)} (s.e. {f(gJ['slope_se'],2)}), "
                    f"supporting a one-for-one entry. " + rev_txt + own_txt + asia_txt, True))
@@ -314,12 +314,12 @@ def build(tag: str):
         "Campbell, J.Y. and Thompson, S.B. (2008) 'Predicting excess stock returns out of sample: can anything beat the historical average?', *Review of Financial Studies*, 21(4), pp. 1509-1531.",
         "Cboe Global Markets (2026) *Cboe Volatility Index mathematics methodology* and daily history files. https://cdn.cboe.com/api/global/us_indices/daily_prices/ (accessed 10 Nov 2026).",
         "Diebold, F.X. and Mariano, R.S. (1995) 'Comparing predictive accuracy', *Journal of Business & Economic Statistics*, 13(3), pp. 253-263.",
-        "[Gneiting] Gneiting, T. (2011) 'Making and evaluating point forecasts', *Journal of the American Statistical Association*, 106(494), pp. 746-762.",
-        "[Hamao] Hamao, Y., Masulis, R.W. and Ng, V. (1990) 'Correlations in price changes and volatility across international stock markets', *Review of Financial Studies*, 3(2), pp. 281-307.",
-        "[Hasbrouck] Hasbrouck, J. (2003) 'Intraday price formation in U.S. equity index markets', *Journal of Finance*, 58(6), pp. 2375-2400.",
+        "Gneiting, T. (2011) 'Making and evaluating point forecasts', *Journal of the American Statistical Association*, 106(494), pp. 746-762.",
+        "Hamao, Y., Masulis, R.W. and Ng, V. (1990) 'Correlations in price changes and volatility across international stock markets', *Review of Financial Studies*, 3(2), pp. 281-307.",
+        "Hasbrouck, J. (2003) 'Intraday price formation in U.S. equity index markets', *Journal of Finance*, 58(6), pp. 2375-2400.",
         "Koenker, R. and Bassett, G. (1978) 'Regression quantiles', *Econometrica*, 46(1), pp. 33-50.",
-        "Moskowitz, T.J., Ooi, Y.H. and Pedersen, L.H. (2012) 'Time series momentum', *Journal of Financial Economics*, 104(2), pp. 228-250 (candidate factor mom252).",
-        "Bollerslev, T., Tauchen, G. and Zhou, H. (2009) 'Expected stock returns and variance risk premia', *Review of Financial Studies*, 22(11), pp. 4463-4492 (candidate factor vrp).",
+        "Moskowitz, T.J., Ooi, Y.H. and Pedersen, L.H. (2012) 'Time series momentum', *Journal of Financial Economics*, 104(2), pp. 228-250 (the 252-day trend candidate).",
+        "Bollerslev, T., Tauchen, G. and Zhou, H. (2009) 'Expected stock returns and variance risk premia', *Review of Financial Studies*, 22(11), pp. 4463-4492 (the variance risk premium candidate).",
         "Newey, W.K. and West, K.D. (1987) 'A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix', *Econometrica*, 55(3), pp. 703-708.",
         "Welch, I. and Goyal, A. (2008) 'A comprehensive look at the empirical performance of equity premium prediction', *Review of Financial Studies*, 21(4), pp. 1455-1508.",
         "S&P Dow Jones Indices (2026) *S&P 500*. https://www.spglobal.com/spdji/en/indices/equity/sp-500/ ; U.S. Department of the Treasury (2026) *Daily Treasury par yield curve rates*. https://home.treasury.gov/ ; Yahoo Finance (2026) chart API (^GSPC, ^VIX, ES=F, ^TNX, ^IRX, DX-Y.NYB, GC=F, ^SOX).",
@@ -327,6 +327,7 @@ def build(tag: str):
         "Board of Governors of the Federal Reserve System (2026) *FOMC calendars* and *November 2026 events*. https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm ; https://www.federalreserve.gov/newsevents/2026-november.htm",
         "News items (all accessed 10 Nov 2026): " + "; ".join(sorted({f"{i['src']}, {i['url']}" for i in NEWS["items"] if i["url"]})),
     ]
+    refs = sorted(refs[:-1], key=lambda s: s.lower()) + refs[-1:]      # Harvard: alphabetical by first author; news items last
     B.append(("bullets", refs, False))
     B.append(("pagebreak",))
     B.append(("h1", "Appendix A. Evidence record (evidence only; no new analysis)", False))

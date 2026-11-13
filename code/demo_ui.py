@@ -52,6 +52,21 @@ SHELL_NOTE = re.compile(r"^\s*Shell cwd was reset to .*$\n?", re.M)
 TOOLS_ALLOWED = ["Bash(python code/demo_tools.py:*)", "Read"]
 DRILLS = ("forecast", "close", "cutoff")
 MODES = {
+    "frozen": {
+        "label": "Frozen: the saved snapshot, no internet (the brief's demo)",
+        "goal": "Check and explain the group's forecast of the S&P 500 official close on Fri 20 Nov 2026, then recommend whether to submit it.",
+        "boundary": "This folder only: the frozen snapshot in data/raw_final, information cutoff Fri 13 Nov 2026 12:00 UTC (07:00 New York). No internet.",
+        "text_boundary": ("Mode: FROZEN. Use only the saved snapshot in this folder (the frozen inputs of the submitted forecast); "
+                          "there is no network access and no fetch tool. The information cutoff is Fri 13 Nov 2026 12:00 UTC (07:00 New York)."),
+        "text_goal": ("You are the group's research agent. Goal: decide whether the group should submit the forecast record in this folder "
+                      "(S&P 500 official close on Fri 20 Nov 2026, S&P Dow Jones Indices, index points)."),
+        "text_finish": ('Finish with one line "Recommendation:" (submit or not, and why) and one line "Would change my mind:" (one concrete thing). '
+                        'You recommend; the group decides.'),
+        "fetchlines": "",
+        "checkline": "- `python code/demo_tools.py --mode frozen check`: the package's independent second code path and leak test",
+        "start": "All data is the frozen snapshot already in this folder; there is nothing to download.",
+        "whatifrun": "Run `python code/demo_tools.py $MODE whatif $ARGUMENTS`.",
+    },
     "demo": {
         "label": "Demo: fresh data, information cutoff applied",
         "goal": "Check and explain the group's forecast of the S&P 500 official close on Fri 20 Nov 2026, then recommend whether to submit it.",
@@ -65,6 +80,8 @@ MODES = {
         "fetchlines": ("- `python code/demo_tools.py --mode demo fetch`: pull fresh public data now (the only tool that uses the internet; fixed sources, writes only to data/agent_demo)\n"
                        "- `python code/demo_tools.py --mode demo compare`: the fresh pull against the frozen snapshot, row by row"),
         "checkline": "- `python code/demo_tools.py --mode demo check`: the package's independent second code path and leak test",
+        "start": "Begin with `fetch` so the data is fresh.",
+        "whatifrun": "Run `python code/demo_tools.py $MODE fetch` for fresh data, then `python code/demo_tools.py $MODE whatif $ARGUMENTS`.",
     },
     "full": {
         "label": "Full: all data to now, no cutoff (look-ahead)",
@@ -81,6 +98,8 @@ MODES = {
         "fetchlines": ("- `python code/demo_tools.py --mode full fetch`: pull everything published up to now (the only tool that uses the internet; fixed sources, writes only to data/agent_full)\n"
                        "- `python code/demo_tools.py --mode full compare`: fresh pull against the frozen snapshot, and what has moved since the cutoff"),
         "checkline": "",
+        "start": "Begin with `fetch` so the data is fresh.",
+        "whatifrun": "Run `python code/demo_tools.py $MODE fetch` for fresh data, then `python code/demo_tools.py $MODE whatif $ARGUMENTS`.",
     },
 }
 
@@ -89,14 +108,16 @@ def given_for(dm):
     m = MODES[dm]
     return {
         "goal": m["goal"], "boundary": m["boundary"],
-        "tools": "python code/demo_tools.py (fetch, compare, record, recompute, " + ("check, " if dm == "demo" else "") + "data, explain, whatif); reading files, including read-only commands such as ls and cat.",
-        "not_allowed": "Any internet except the fetch tool (web tools off; network commands refused), writing or editing any file, any other program, trading.",
-        "human": "The agent recommends. A group member reads the check and signs the record." if dm == "demo" else "The agent reports. The signed forecast is unchanged and cannot be changed by a look-ahead.",
+        "tools": "python code/demo_tools.py (" + ("" if dm == "frozen" else "fetch, compare, ") + "record, recompute, " + ("check, " if dm != "full" else "")
+                 + "data, explain, whatif); reading files, including read-only commands such as ls and cat.",
+        "not_allowed": ("Any internet (web tools off; network commands refused; no fetch tool), " if dm == "frozen" else
+                        "Any internet except the fetch tool (web tools off; network commands refused), ") + "writing or editing any file, any other program, trading.",
+        "human": "The agent recommends. A group member reads the check and signs the record." if dm != "full" else "The agent reports. The signed forecast is unchanged and cannot be changed by a look-ahead.",
     }
 
 
 def mode_of(x):
-    return x if x in MODES else "demo"
+    return x if x in MODES else "frozen"
 
 
 # ---------------------------------------------------------------------------------------------- helpers
@@ -112,11 +133,12 @@ def claude_cmd():
     return [sys.executable, b] if b.endswith(".py") else [b]
 
 
-def prompt_for(root, cmd, arg, dm="demo"):
+def prompt_for(root, cmd, arg, dm="frozen"):
     m = MODES[mode_of(dm)]
     text = (root / "agent" / "demo_prompts" / f"{cmd}.md").read_text(encoding="utf-8").replace("\r\n", "\n")
     text = re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S)
-    for tok, val in (("$FETCHLINES", m["fetchlines"]), ("$CHECKLINE", m["checkline"]), ("$GOAL", m["text_goal"]),
+    for tok, val in (("$WHATIFRUN", m["whatifrun"]), ("$START", m["start"]),
+                     ("$FETCHLINES", m["fetchlines"]), ("$CHECKLINE", m["checkline"]), ("$GOAL", m["text_goal"]),
                      ("$BOUNDARY", m["text_boundary"]), ("$FINISH", m["text_finish"]), ("$MODE", "--mode " + mode_of(dm))):
         text = text.replace(tok, val)
     text = re.sub(r"\n\s*\n(?=- )", "\n", text)       # an empty tool line (no check tool in Full mode) leaves no gap
@@ -149,12 +171,14 @@ def run_meta(path):
             "ok": bool(ok), "mtime": path.stat().st_mtime}
 
 
-def info(dm="demo"):
+def info(dm="frozen"):
     dm = mode_of(dm)
     try:
         c = demo_tools.ctx(None, dm)
         rec = c["rec"]
-        if c["fresh"]:
+        if dm == "frozen":
+            data = f"frozen snapshot {c['frozen'].name} (no internet)"
+        elif c["fresh"]:
             data = f"fresh pull {c['got']:%d %b %H:%M} UTC in data/agent_{dm}"
         elif dm == "full":
             data = "no data yet: the agent's first step is to fetch"
@@ -288,7 +312,7 @@ class H(BaseHTTPRequestHandler):
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Content-Length", str(len(b))); self.end_headers()
             self.wfile.write(b)
         elif u.path == "/api/info":
-            self._json(info(q.get("dm", "demo")))
+            self._json(info(q.get("dm", "frozen")))
         elif u.path == "/api/run":
             self.live(q.get("cmd", "check"), q.get("opt", ""), q.get("model", "sonnet"), q.get("depth", "fast"), q.get("q", ""), mode_of(q.get("dm")))
         elif u.path == "/api/stop":
@@ -306,7 +330,7 @@ class H(BaseHTTPRequestHandler):
             self._json({"error": "not found"}, 404)
 
     # ------------------------------------------------------------------ live run
-    def live(self, cmd, opt, model, depth, question, dm="demo"):
+    def live(self, cmd, opt, model, depth, question, dm="frozen"):
         self._sse_start()
         question = clean_question(question)
         opts = opt.split()
