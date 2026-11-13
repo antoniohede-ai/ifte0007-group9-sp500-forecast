@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Demo</title>
+<style>
+  :root {
+    --navy: #14304d; --teal: #1d8a78; --slate: #52606d; --purple: #7c3a8a; --amber: #b7791f; --green: #2f855a; --red: #c53030; --blue: #2b6cb0; --orange: #c05621;
+    --ink: #1a202c; --muted: #5a6573; --line: #d9e0e8; --bg: #f4f6f9; --card: #fff; --tint: #eef3f8;
+    --mono: Consolas, "Cascadia Mono", Menlo, monospace; --fs: 16px;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: var(--fs); }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 1rem/1.45 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+         display: grid; grid-template-rows: auto auto 1fr auto; grid-template-columns: minmax(0, 1fr); }
+  code { font-family: var(--mono); font-size: .92em; }
+
+  header { background: var(--navy); color: #fff; padding: .8rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+  header h1 { font-size: 1.35rem; margin: 0; font-weight: 650; flex: 1 1 20rem; }
+  header h1 small { display: block; font-size: .85rem; font-weight: 400; opacity: .8; }
+  .badge { font-size: .8rem; font-weight: 700; letter-spacing: .04em; padding: .3rem .65rem; border-radius: 999px; background: rgba(255,255,255,.14);
+           white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .badge.live { background: #e53e3e; } .badge.replay { background: var(--amber); } .badge.drill { background: var(--orange); }
+  .now { font-size: .95rem; font-weight: 600; padding: .35rem .8rem; border-radius: 999px; background: rgba(255,255,255,.1); min-width: 13rem; }
+  .now.busy::before { content: ""; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: #68d391; margin-right: .5rem; animation: pulse 1s infinite; vertical-align: .05rem; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .timer { font: 700 1.9rem/1 var(--mono); min-width: 6rem; text-align: right; }
+
+  .stages { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .5rem; padding: .7rem 1.5rem; background: #fff; border-bottom: 1px solid var(--line); }
+  .stage { border: 2px solid var(--line); border-radius: .6rem; padding: .45rem .7rem; color: var(--muted); transition: all .25s; min-width: 0; }
+  .stage b { display: flex; justify-content: space-between; font-size: 1rem; color: var(--ink); }
+  .stage b i { font: 400 .8rem var(--mono); color: var(--muted); }
+  .stage span { font-size: .8rem; overflow-wrap: anywhere; }
+  .stage.active { border-color: var(--teal); background: #e6f6f2; box-shadow: 0 0 0 4px rgba(29,138,120,.18); }
+  .stage.done { border-color: #9ad0c4; }
+  .stage.done b::after { content: "\2713"; color: var(--teal); margin-left: .3rem; }
+
+  main { display: grid; grid-template-columns: 21rem minmax(0, 1fr); gap: 1.1rem; padding: 1.1rem 1.5rem; min-height: 0; }
+  aside { display: flex; flex-direction: column; gap: .8rem; overflow: auto; min-height: 0; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: .75rem; padding: .8rem 1rem; }
+  .panel h2 { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .45rem; }
+  .given dt { font-weight: 700; font-size: .85rem; color: var(--navy); margin-top: .45rem; }
+  .given dd { margin: .1rem 0 0; font-size: .9rem; }
+  .rec .big { font: 700 1.8rem/1.1 var(--mono); color: var(--navy); }
+  .rec .meta { font-size: .85rem; color: var(--muted); }
+  .legend p { margin: .3rem 0; font-size: .85rem; }
+  .sign input { width: 100%; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: .5rem; font: inherit; margin: .4rem 0 .5rem; }
+  .sign .row { display: flex; gap: .5rem; }
+  .sign.ready { border-color: var(--purple); box-shadow: 0 0 0 4px rgba(124,58,138,.15); }
+  .stamp { margin-top: .6rem; font-weight: 700; color: var(--purple); }
+  .hint { font-size: .8rem; color: var(--muted); }
+
+  .tag { font-size: .7rem; font-weight: 800; letter-spacing: .05em; padding: .12rem .45rem; border-radius: .3rem; text-transform: uppercase; white-space: nowrap; }
+  .tag.preset { background: #e2e8f0; color: var(--slate); } .tag.live { background: #fed7d7; color: #9b2c2c; }
+  .tag.py { background: #e9d8fd; color: #553c9a; } .tag.rec { background: #fefcbf; color: #744210; }
+
+  .timeline { overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: .75rem; padding-right: .4rem; }
+  .empty { color: var(--muted); margin: auto; text-align: center; max-width: 34rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--slate); border-radius: .75rem; padding: .7rem 1rem; animation: in .25s ease-out; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .card .head { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; font-size: .8rem; color: var(--muted); margin-bottom: .25rem; }
+  .card .head .kind { font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .card .head .t { margin-left: auto; font-family: var(--mono); }
+  .line { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: .75rem; padding: .2rem 0; font-size: 1.2rem; }
+  .line .lab { font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding-top: .3rem; }
+  .cursor::after { content: "\258C"; color: var(--teal); animation: pulse .8s infinite; margin-left: .1rem; }
+  .think { border-left-color: var(--blue); } .lab.think { color: var(--blue); }
+  .plan { border-left-color: #285e61; background: #f0fbfa; } .lab.plan { color: #285e61; }
+  .hyp { border-left-color: var(--amber); } .lab.hyp { color: var(--amber); }
+  .found { border-left-color: var(--teal); } .lab.found { color: var(--teal); }
+  .dec { border-left-color: var(--navy); } .lab.dec { color: var(--navy); }
+  .recm { border-left-color: var(--green); background: #f0faf4; } .lab.recm { color: var(--green); }
+  .change { border-left-color: var(--orange); } .lab.change { color: var(--orange); }
+  .lab.plain { color: var(--slate); }
+  .card.recm .line { font-weight: 600; }
+  .goal { border-left-color: var(--navy); background: var(--tint); }
+  .goal summary { cursor: pointer; font-size: .95rem; }
+  .goal pre { white-space: pre-wrap; font: .85rem/1.45 var(--mono); margin: .4rem 0 0; }
+  .drillcard { border-left-color: var(--orange); background: #fffaf0; font-size: 1.05rem; }
+  .tool { border-left-color: var(--purple); }
+  .tool .cmd { font: 600 1.1rem var(--mono); color: var(--purple); overflow-wrap: anywhere; }
+  .tool pre { white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.45 var(--mono); background: #f7f8fa; border: 1px solid var(--line); border-radius: .5rem; padding: .6rem .75rem; margin: .5rem 0 0; }
+  .tool pre.errout { background: #fff5f5; border-color: #feb2b2; }
+  .spin { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+  .spin::before { content: ""; display: inline-block; width: .75rem; height: .75rem; margin-right: .5rem; border: 2px solid var(--purple); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -.05rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; } .warn { color: var(--amber); font-weight: 700; }
+  .reasoning { border-left-color: var(--purple); background: #faf5fb; }
+  .reasoning .body { font-size: 1rem; font-style: italic; white-space: pre-wrap; color: #44337a; max-height: 9.5em; overflow: auto; }
+  .reasoning.closed .body { max-height: 4.4em; }
+  .err { border-left-color: var(--red); background: #fff5f5; }
+  .score { border-left-color: var(--teal); background: #e6f6f2; }
+  .score .verdict { font-size: 1.6rem; font-weight: 800; margin: .1rem 0 .4rem; }
+  .score .verdict.go, .drillcard .verdict.go { color: var(--green); } .score .verdict.stop, .drillcard .verdict.stop { color: var(--red); }
+  .score .verdict.cond { color: var(--amber); } .score .verdict.info { color: var(--navy); font-size: 1.2rem; }
+  .score .facts { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font-size: .95rem; }
+  .note { font-size: .8rem; color: var(--muted); padding: 0 .3rem; }
+
+  footer { background: #fff; border-top: 1px solid var(--line); padding: .55rem 1.5rem; display: flex; flex-direction: column; gap: .45rem; }
+  footer .row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  button, select, input.ask { font: inherit; font-size: .92rem; border-radius: .5rem; border: 1px solid var(--line); background: #fff; padding: .45rem .75rem; }
+  button { cursor: pointer; }
+  button.primary { background: var(--teal); color: #fff; border-color: var(--teal); font-weight: 700; }
+  button.drill { border-color: var(--orange); color: var(--orange); font-weight: 700; }
+  button.stop { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
+  button.chip { background: var(--tint); }
+  button.sugg { background: transparent; border-style: dashed; font-size: .8rem; padding: .25rem .55rem; }
+  button:disabled, input:disabled, select:disabled { opacity: .45; cursor: not-allowed; }
+  input.ask { flex: 1 1 18rem; min-width: 12rem; }
+  #liveRow1, #replayRow { flex: 1 1 auto; flex-wrap: nowrap; min-width: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; } .seg button.on { background: var(--navy); color: #fff; }
+  .sep { width: 1px; height: 1.6rem; background: var(--line); margin: 0 .2rem; }
+  .grow { flex: 1; }
+  [hidden] { display: none !important; }
+  @media (max-width: 1100px) {
+    body { height: auto; min-height: 100%; }
+    main { grid-template-columns: minmax(0, 1fr); padding: .9rem 1rem; }
+    aside { order: 2; overflow: visible; }
+    .timeline { min-height: 60vh; max-height: 75vh; }
+    .line { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .stages { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .6rem 1rem; }
+    header, footer { padding-left: 1rem; padding-right: 1rem; }
+    footer { position: sticky; bottom: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>How our research agent checks the forecast<small>S&amp;P 500 official close, Fri 20 Nov 2026 &middot; frozen inputs &middot; no internet</small></h1>
+  <span class="now" id="now">Ready</span>
+  <span class="badge" id="mode">READY</span>
+  <span class="badge" id="model" hidden></span>
+  <span class="timer" id="timer" title="Agent time since start">0.0s</span>
+</header>
+
+<section class="stages" id="stages">
+  <div class="stage" data-s="goal"><b>Goal<i></i></b><span>given in writing</span></div>
+  <div class="stage" data-s="data"><b>Data<i></i></b><span>frozen snapshot, cutoff</span></div>
+  <div class="stage" data-s="tools"><b>Tools<i></i></b><span>Python, run now</span></div>
+  <div class="stage" data-s="decisions"><b>Decisions<i></i></b><span>in its own words</span></div>
+  <div class="stage" data-s="checks"><b>Checks<i></i></b><span>second code path, leak test</span></div>
+  <div class="stage" data-s="human"><b>Human<i></i></b><span>we approve or send back</span></div>
+</section>
+
+<main>
+  <aside>
+    <div class="panel given"><h2>What the agent was given</h2><dl id="given"></dl></div>
+    <div class="panel rec"><h2>Record under check</h2><div id="record">Loading&hellip;</div></div>
+    <div class="panel legend"><h2>What is preset, what is live</h2>
+      <p><span class="tag preset">Preset</span> Frozen data; the tool menu and its code; the goal, the brief's rules and the narration format; in /whatif, the change chosen by the presenter.</p>
+      <p><span class="tag live">Live</span> The agent's plan, which tools it calls and in what order, the what-if values it picks, every word and its reasoning, whether it catches the hidden fault, and its recommendation.</p>
+      <p><span class="tag py">Python</span> Each tool result is computed at that moment from the frozen files.</p>
+      <p><span class="tag rec">Recorded</span> Replay of an earlier run: nothing is generated.</p>
+    </div>
+    <div class="panel sign" id="sign">
+      <h2>Human sign-off (display only)</h2>
+      <div class="hint">The agent recommends; a group member decides. The signed file is <code>forecast_record.json</code>.</div>
+      <input id="signer" placeholder="Name of the member signing">
+      <div class="row"><button id="approve">Approve</button><button id="sendback">Send back</button></div>
+      <div class="stamp" id="stamp"></div>
+    </div>
+  </aside>
+  <section class="timeline" id="tl"></section>
+</main>
+
+<footer>
+  <div class="row">
+    <div class="seg"><button id="mLive" class="on">Live</button><button id="mReplay">Replay</button></div>
+    <span id="liveRow1" class="row">
+      <button class="primary" id="runCheck" title="The agent checks the record in three steps">Run /check</button>
+      <button class="drill" id="runDrill" title="Plants an error in a copy of the record; the agent is not told">Fault drill</button>
+      <input class="ask" id="ask" list="suggList" placeholder="Ask the agent a question (it picks its own tools); click for suggestions" maxlength="300">
+      <datalist id="suggList"></datalist>
+      <button class="primary" id="runAsk">Ask</button>
+    </span>
+    <span id="replayRow" class="row" hidden>
+      <select id="runSel"></select>
+      <select id="speed"><option value="1">1&times;</option><option value="2">2&times;</option><option value="4">4&times;</option></select>
+      <button class="primary" id="play">Play</button>
+    </span>
+    <button class="stop" id="stop" hidden>Stop</button>
+    <span class="grow"></span>
+    <button id="smaller" title="Smaller text">A&minus;</button><button id="bigger" title="Larger text">A+</button>
+    <button id="reset">Clear</button>
+  </div>
+  <div class="row" id="liveRow2">
+    <span class="hint">What if:</span><span id="chips" class="row"></span>
+    <span class="grow"></span>
+    <select id="modelSel" title="Model for live runs. Auto: Sonnet 5.5 (faster) for /check, drill and what-if; Opus 5.5 for Ask (Sonnet's safety filter has blocked ordinary Ask questions)"><option value="auto">Auto</option><option value="sonnet">Sonnet 5.5</option><option value="haiku">Haiku 5.5</option><option value="opus">Opus 5.5</option></select>
+    <div class="seg" title="Deep gives the model more room to reason (slower)"><button id="dFast" class="on">Fast</button><button id="dDeep">Deep</button></div>
+  </div>
+</footer>
+
+<script>
+const CHIP = { "drift=mean": "Mean drift", "drift=2000": "Drift from 2000", "drift=fixed": "Fixed +0.25%", "drift=none": "No drift",
+  "futures=none": "No futures", "futures=06:00": "Futures at 06:00", "futures=05:00": "Futures at 05:00", "overnight=07:00": "Overnight avg at 07:00" };
+const SUGG = ["How much does the futures move matter?", "Is the forecast sensitive to the drift choice?", "What did the cutoff remove, and why?", "What if the official close is 5 points lower than Yahoo's?", "Why subtract the average overnight move?", "Show me the futures prices around the cutoff."];
+const SEP = String.raw`\b\s*[:\-—–]?\s*`;
+const LABELS = [["would change my mind", "Would change my mind", "change"], ["recommendation", "Recommendation", "recm"], ["answer", "Answer", "recm"],
+  ["expectation", "Hypothesis check", "hyp"], ["expect", "Hypothesis", "hyp"], ["plan", "Plan", "plan"], ["checking", "Thinking", "think"], ["found", "Found", "found"], ["decision", "Decision", "dec"]]
+  .map(([w, lab, cls]) => [new RegExp("^" + w + SEP, "i"), lab, cls]);
+const STAGES = ["goal", "data", "tools", "decisions", "checks", "human"];
+const $ = id => document.getElementById(id);
+const S = { es: null, mode: "live", depth: "fast", running: false, tools: {}, blocks: {}, meta: null, t0: 0, speed: 1, tick: null, model: "", nTools: 0, fs: 16 };
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const mark = s => esc(s)
+  .replace(/PASS_ALL = (True|False)/g, (m, v) => `<span class="${v === "True" ? "ok" : "bad"}">${m}</span>`)
+  .replace(/\bMATCH\b/g, '<span class="ok">MATCH</span>').replace(/DIFFERS[^\n]*/g, m => `<span class="bad">${m}</span>`)
+  .replace(/(?<!PASS_ALL = |">)\bTrue\b/g, '<span class="ok">True</span>').replace(/(?<!PASS_ALL = |">)\bFalse\b/g, '<span class="bad">False</span>')
+  .replace(/\b\d+ later (bars|daily rows) dropped|later rows are dropped/g, m => `<span class="warn">${m}</span>`);
+const fmtT = t => (+t || 0).toFixed(1) + "s";
+
+/* ---------- clock and status ---------- */
+function setNow(text, busy = true) { $("now").textContent = text; $("now").classList.toggle("busy", busy); }
+function startClock(speed) {
+  S.t0 = performance.now(); S.speed = speed; S.lastEv = S.t0; clearInterval(S.tick);
+  S.tick = setInterval(() => { $("timer").textContent = fmtT((performance.now() - S.t0) / 1000 * S.speed); thinkingTick(); }, 100);
+}
+function stopClock(t) { clearInterval(S.tick); S.tick = null; dropPending(); if (t != null) $("timer").textContent = fmtT(t); }
+
+/* While the model works between events (the CLI delivers each finished block at once), show that it is
+   thinking and for how long, instead of a static status. Real elapsed time, scaled for replay speed. */
+function thinkingTick() {
+  if (!S.running || S.waitTool || Object.values(S.blocks).some(b => b.open)) return;
+  const secs = (performance.now() - S.lastEv) / 1000 * S.speed;
+  if (secs < 0.8) return;
+  if (!S.pending) { S.pending = add(head("The agent is thinking", (performance.now() - S.t0) / 1000 * S.speed, tagFor("live")) + '<div class="line"><span class="lab think">Working</span><span class="cursor">thinking for <b class="secs"></b></span></div>', "pending think"); }
+  S.pending.querySelector(".secs").textContent = secs.toFixed(1) + "s";
+  setNow("Thinking… " + secs.toFixed(1) + "s");
+}
+function dropPending() { if (S.pending) { S.pending.remove(); S.pending = null; } }
+
+/* ---------- stages ---------- */
+function stage(s, t) {
+  const i = STAGES.indexOf(s);
+  document.querySelectorAll(".stage").forEach(el => {
+    const j = STAGES.indexOf(el.dataset.s);
+    if (j === i && !el.classList.contains("active")) { el.classList.add("active"); el.classList.remove("done"); if (!el.querySelector("i").textContent) el.querySelector("i").textContent = fmtT(t); }
+    else if (j !== i && el.classList.contains("active")) { el.classList.remove("active"); el.classList.add("done"); }
+  });
+}
+function resetStages() { document.querySelectorAll(".stage").forEach(el => { el.classList.remove("active", "done"); el.querySelector("i").textContent = ""; }); }
+
+/* ---------- cards ---------- */
+function tagFor(kind) {
+  if (S.mode === "replay") return '<span class="tag rec">Recorded</span>';
+  return { preset: '<span class="tag preset">Preset</span>', live: `<span class="tag live">Live &middot; ${esc(S.model || "model")}</span>`,
+    py: '<span class="tag py">Python &middot; run now</span>', presetstep: '<span class="tag preset">Option set by presenter</span>',
+    chosen: '<span class="tag live">Chosen by the agent</span>' }[kind] || "";
+}
+const head = (kind, t, tag = "", extra = "") => `<div class="head"><span class="kind">${kind}</span>${extra}${tag}<span class="t">${fmtT(t)}</span></div>`;
+function add(html, cls) {
+  const d = document.createElement("div"); d.className = "card " + cls; d.innerHTML = html; $("tl").appendChild(d); scrollDown(); return d;
+}
+function scrollDown() { const tl = $("tl"); tl.scrollTop = tl.scrollHeight; }
+
+function parseLines(text, streaming) {
+  const lines = text.split(/\n+/).map(s => s.replace(/^[\s>*\-•#]+/, "").replace(/\*\*/g, "").trim()).filter(Boolean);
+  let first = null, rec = false, dec = false;
+  const rows = lines.map((l, i) => {
+    const hit = LABELS.find(([re]) => re.test(l));
+    if (hit && !first) first = hit;
+    if (hit && hit[2] === "recm") rec = true;
+    if (hit && /^(Decision|Recommendation|Answer|Hypothesis)/.test(hit[1])) dec = true;
+    const body = hit ? l.replace(hit[0], "") : l;
+    const cur = streaming && i === lines.length - 1 ? " cursor" : "";
+    return `<div class="line"><span class="lab ${hit ? hit[2] : "plain"}">${hit ? hit[1] : "Agent"}</span><span class="${cur}">${esc(body)}</span></div>`;
+  }).join("") || (streaming ? `<div class="line"><span class="lab plain">Agent</span><span class="cursor"></span></div>` : "");
+  return { rows, cls: rec ? "recm" : (first ? first[2] : "plain"), kind: rec ? (first && first[1] === "Answer" ? "Answer" : "Recommendation") : (first ? first[1] : "Agent"), dec };
+}
+function renderText(card, text, t, streaming) {
+  const p = parseLines(text, streaming);
+  card.className = "card " + p.cls;
+  card.innerHTML = head(p.kind, t, tagFor("live")) + p.rows;
+  if (p.dec) stage("decisions", t);
+  scrollDown();
+}
+
+function toolStage(cmd, name) {
+  if (name === "Read" || /\brecord\b/.test(cmd)) return "data";
+  if (/whatif|recompute/.test(cmd)) return "tools";
+  if (/\bcheck\b|independent_check/.test(cmd)) return "checks";
+  return "tools";
+}
+
+/* ---------- events ---------- */
+function handle(ev) {
+  const t = ev.t ?? 0;
+  if (ev.k !== "delta" && ev.k !== "log") { S.lastEv = performance.now(); dropPending(); }
+  if (ev.k === "tool") S.waitTool = true; else if (ev.k === "result" || ev.k === "end" || ev.k === "error") S.waitTool = false;
+  switch (ev.k) {
+    case "meta": {
+      S.meta = ev; S.model = ev.model || "";
+      const replay = ev.mode === "replay";
+      $("mode").textContent = replay ? (ev.sample ? "REPLAY · SAMPLE" : "REPLAY · RECORDED") : (ev.cmd === "drill" ? "LIVE · FAULT DRILL" : "LIVE · Claude Code");
+      $("mode").className = "badge " + (replay ? "replay" : (ev.cmd === "drill" ? "drill" : "live"));
+      if (ev.note) add(head("About this recording", t) + `<div>${esc(ev.note)}</div>`, "plain");
+      if (ev.drill) add(head("Fault drill", t, '<span class="tag preset">Planted by the page</span>') + (ev.drill.what
+        ? `<div>The page planted <b>one hidden error</b> in a <b>temporary copy</b> of <code>${esc(ev.drill.field)}</code>: the forecast, the last close or the cutoff, chosen at random. Nobody in the room knows which, and the agent has not been told. The real record is untouched. It is revealed when the agent finishes.</div>`
+        : `<div>The page changed <code>${esc(ev.drill.field)}</code> in a temporary copy from ${esc(ev.drill.real)} to <b>${esc(ev.drill.planted)}</b>. The agent was not told.</div>`), "drillcard");
+      const what = ev.cmd === "whatif" ? "/whatif " + ev.opt : ev.cmd === "ask" ? "Ask: “" + ev.question + "”" : "/check";
+      add(head("Prompt given to the agent", t, tagFor("preset"), ` &middot; ${esc(what)}`) + `<details><summary>${esc((ev.prompt || "").split("\n")[0])}</summary><pre>${esc(ev.prompt || "")}</pre></details>`, "goal");
+      stage("goal", t); setNow("Starting Claude Code…"); break; }
+    case "init": S.model = (ev.model || "").replace(/^claude-/, ""); $("model").hidden = false; $("model").textContent = ev.model || ""; setNow("Reading the prompt…"); break;
+    case "open": {
+      const card = ev.kind === "thinking"
+        ? add(head("Reasoning", t, tagFor("live")) + '<div class="body cursor"></div>', "reasoning")
+        : add("", "plain");
+      S.blocks[ev.blk] = { card, kind: ev.kind, text: "", t, open: true };
+      if (ev.kind === "thinking") setNow("Reasoning…"); else { setNow("Writing…"); renderText(card, "", t, true); }
+      break; }
+    case "delta": {
+      const b = S.blocks[ev.blk]; if (!b) break; b.text += ev.text;
+      if (b.kind === "thinking") { const body = b.card.querySelector(".body"); body.textContent = b.text; body.scrollTop = body.scrollHeight; scrollDown(); }
+      else renderText(b.card, b.text, b.t, true);
+      break; }
+    case "close": {
+      const b = S.blocks[ev.blk]; if (!b) break; b.open = false;
+      if (!b.text.trim()) b.card.remove();
+      else if (b.kind === "thinking") { b.card.classList.add("closed"); b.card.querySelector(".body").classList.remove("cursor"); }
+      else renderText(b.card, b.text, b.t, false);
+      setNow("Thinking…"); break; }
+    case "text": renderText(add("", "plain"), ev.text, t, false); setNow("Thinking…"); break;
+    case "thinking": add(head("Reasoning", t, tagFor("live")) + `<div class="body">${esc(ev.text)}</div>`, "reasoning closed"); break;
+    case "preparing": setNow("Choosing a tool…"); break;
+    case "tool": {
+      S.nTools++;
+      const chosen = !(S.meta && S.meta.cmd === "whatif");
+      const d = add(head("Tool call", t, tagFor(chosen ? "chosen" : "presetstep"), ` &middot; ${esc(ev.name)}`) + `<div class="cmd">$ ${esc(ev.command)}</div><div class="spin">running&hellip;</div>`, "tool");
+      S.tools[ev.id] = { el: d, t }; stage(toolStage(ev.command || "", ev.name), t); setNow("Running: " + (ev.command || ev.name).replace(/^python code\//, "")); break; }
+    case "result": {
+      const x = S.tools[ev.id]; const html = `<div class="head" style="margin-top:.4rem">${tagFor("py")}</div><pre class="${ev.error ? "errout" : ""}">${mark(ev.text)}</pre>`;
+      if (x) { x.el.querySelector(".spin")?.remove(); x.el.insertAdjacentHTML("beforeend", html);
+        x.el.querySelector(".head .t").insertAdjacentHTML("beforebegin", `<span class="hint">(${(t - x.t).toFixed(1)}s)</span>`); }
+      else add(head("Tool output", t) + html, "tool");
+      scrollDown(); setNow("Reading the result…"); break; }
+    case "error": {
+      const auth = /authenticate|OAuth|login/i.test(ev.text), flagged = /safeguards|flagged|usage policy|aup/i.test(ev.text);
+      const help = auth ? `Sign in once on this laptop: open a terminal, run <code>claude</code>, then <code>/login</code>. Or switch to <b>Replay</b>.`
+        : flagged ? `The model's safety filter stopped this request; it can happen with normal requests. Choose <b>Opus 5.5</b> in the model menu and run it again, rephrase the question, or switch to <b>Replay</b>.` : "";
+      add(head("Problem", t) + `<div>${esc(ev.text)}</div>` + (help ? `<div class="hint" style="margin-top:.4rem">${help}</div>` : ""), "err");
+      setNow("Problem", false); break; }
+    case "log": if (/error|warn/i.test(ev.text)) add(`<div class="note">${esc(ev.text)}</div>`, "plain"); break;
+    case "end": scorecard(ev, t); break;
+    case "exit": if (ev.code) add(head("Problem", t) + `<div>Claude Code exited with code ${ev.code}.</div>`, "err"); finish(t); break;
+  }
+}
+
+function scorecard(ev, t) {
+  stopClock(t);
+  const outs = [...document.querySelectorAll(".tool pre")].map(p => p.textContent).join("\n");
+  const nMatch = (outs.match(/\bMATCH\b/g) || []).length, nDiff = (outs.match(/DIFFERS/g) || []).length;
+  const pass = /PASS_ALL = True/.test(outs) ? "PASS_ALL true" : /PASS_ALL = False/.test(outs) ? "PASS_ALL false" : "";
+  const lines = [...document.querySelectorAll(".line")].map(l => [l.querySelector(".lab").textContent, l.lastElementChild.textContent]);
+  const recLine = lines.find(([a]) => a === "Recommendation"), ans = lines.find(([a]) => a === "Answer"), dec = [...lines].reverse().find(([a]) => a === "Decision");
+  let verdict = "", cls = "info";
+  let recText = "";
+  if (recLine) {
+    // Three-way, from explicit phrases only ("...PREVIEW, NOT BINDING status..." must not flip it):
+    // do not submit (yet) | submit only after a condition | submit
+    const r = recLine[1].toLowerCase().trim(); recText = recLine[1];
+    const neg = /^(no\b|not yet|not\b|don't|do not|hold|withhold|reject)/.test(r)
+      || /\b(do not|don't|should not|shouldn't|cannot|can't|not)\s+(yet\s+)?(submit|sign|approve)|\bnot yet\b|\b(withhold|hold off|reject|send (it |the record )?back|regenerate)\b/.test(r);
+    const cond = !neg && /\bsubmit/.test(r) && /\b(only after|only once|only if|once the|provided|subject to|but first|before submitting|after the group)\b/.test(r);
+    verdict = neg ? "Agent recommends: do not submit (yet)" : cond ? "Agent recommends: submit only after a condition" : /\bsubmit/.test(r) ? "Agent recommends: submit" : recLine[1];
+    cls = neg ? "stop" : cond ? "cond" : /\bsubmit/.test(r) ? "go" : "info";
+  }
+  else if (ans) verdict = ans[1]; else if (dec) verdict = dec[1];
+  const facts = [`${S.nTools} tool call${S.nTools === 1 ? "" : "s"}`, nMatch ? `<span class="ok">${nMatch} MATCH</span>` : "", nDiff ? `<span class="bad">${nDiff} DIFFERS</span>` : "",
+    pass ? `<span class="${pass.endsWith("true") ? "ok" : "bad"}">${pass}</span>` : "", ev.turns != null ? `${ev.turns} model turns` : "", `${fmtT(t)} total`,
+    ev.ok === false ? `<span class="bad">${esc(ev.reason || "error")}</span>` : ""].filter(Boolean).map(x => `<span>${x}</span>`).join("");
+  add(head("Result", t) + (verdict ? `<div class="verdict ${cls}">${esc(verdict)}</div>` : "") + (recText ? `<div class="hint" style="font-size:.95rem;margin-bottom:.4rem">In its words: “${esc(recText)}”</div>` : "") + `<div class="facts">${facts}</div>`, "score");
+  const dr = S.meta && S.meta.drill;
+  if (dr && dr.what) {
+    // reveal: did the agent name the planted problem? (keyword check on its own lines; judge from its reasoning too)
+    const said = lines.filter(([a]) => /Found|Decision|Recommendation|Thinking|Plan/.test(a)).map(([, b]) => b.toLowerCase()).join(" ")
+      + " " + [...document.querySelectorAll(".reasoning .body")].map(b => b.textContent.toLowerCase()).join(" ");
+    const named = { forecast: /forecast.{0,80}(differ|mismatch|does not match|doesn't match|off by|higher|lower|gap)|(differ|mismatch|gap).{0,80}forecast/,
+      close: /close.{0,80}(differ|mismatch|does not match|doesn't match|off by|gap)|(differ|mismatch).{0,80}close/,
+      cutoff: /13:45|08:45|cutoff.{0,80}(late|after|differ|breach|violat|wrong)|(late|after|breach|violat).{0,80}cutoff/ }[dr.variant].test(said);
+    const caught = cls === "stop" && named;
+    add(head("Fault drill revealed", t, '<span class="tag preset">Planted by the page</span>') +
+      `<div><b>Planted:</b> ${esc(dr.what)}.</div><div class="verdict ${caught ? "go" : "stop"}" style="font-size:1.25rem">${caught ? "Caught: the agent named the problem and advised against submitting" : named ? "Named the problem, but did not advise against submitting" : cls === "stop" ? "Advised against submitting; check whether it named the planted problem" : "Missed: the agent did not flag the planted error"}</div><div class="hint">Automatic keyword check of the agent's own lines; read its reasoning above to judge.</div>`, "drillcard");
+  }
+  if (ev.ok !== false) { stage("human", t); $("sign").classList.add("ready"); $("sign").scrollIntoView({ behavior: "smooth", block: "nearest" }); setNow("Waiting for a human decision", false); }
+  else setNow("Stopped", false);
+  if (S.mode === "replay") finish(t);
+}
+
+/* ---------- running ---------- */
+function setBusy(b) {
+  document.querySelectorAll("footer button, footer select, footer input").forEach(x => { if (!["reset", "stop", "smaller", "bigger"].includes(x.id)) x.disabled = b; });
+  $("stop").hidden = !b;
+  $("liveRow2").hidden = b || S.mode !== "live";   // settings row hidden while the agent runs: more room for the timeline
+}
+function finish(t) { S.running = false; if (S.es) S.es.close(); S.es = null; setBusy(false); if (S.tick) stopClock(t); if ($("now").classList.contains("busy")) setNow("Done", false); }
+function clearAll() {
+  if (S.es) S.es.close(); S.es = null; S.running = false; setBusy(false); stopClock(0);
+  dropPending();
+  Object.assign(S, { tools: {}, blocks: {}, meta: null, model: "", nTools: 0, waitTool: false, pending: null });
+  $("tl").innerHTML = `<div class="empty"><h2>Ready</h2><p><b>Run /check</b> for the three-step check, <b>Fault drill</b> to see whether the agent catches a planted error, or <b>Ask</b> a question and watch it choose its own tools. Every word the agent writes streams in as it is generated.</p></div>`;
+  $("mode").textContent = "READY"; $("mode").className = "badge"; $("model").hidden = true; setNow("Ready", false);
+  $("stamp").textContent = ""; $("sign").classList.remove("ready"); resetStages();
+}
+function start(url, speed = 1) {
+  clearAll(); $("tl").innerHTML = ""; S.running = true; setBusy(true); startClock(speed);
+  S.es = new EventSource(url);
+  S.es.onmessage = m => handle(JSON.parse(m.data));
+  S.es.onerror = () => { if (S.running) finish(); };
+}
+const pickModel = cmd => $("modelSel").value === "auto" ? (cmd === "ask" ? "opus" : "sonnet") : $("modelSel").value;
+const liveUrl = (cmd, extra = "") => `/api/run?cmd=${cmd}&model=${pickModel(cmd)}&depth=${S.depth}${extra}`;
+function ask() { const q = $("ask").value.trim(); if (q) start(liveUrl("ask", "&q=" + encodeURIComponent(q))); }
+
+/* ---------- setup ---------- */
+async function load() {
+  const info = await (await fetch("/api/info")).json();
+  const g = info.given;
+  $("given").innerHTML = [["Goal", g.goal], ["Data boundary", g.boundary], ["Tools allowed", g.tools], ["Not allowed", g.not_allowed], ["Human responsibility", g.human]]
+    .map(([a, b]) => `<dt>${a}</dt><dd>${esc(b)}</dd>`).join("");
+  const r = info.record;
+  $("record").innerHTML = r.error ? `<span class="bad">${esc(r.error)}</span>` :
+    `<div class="big">${Number(r.forecast).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div><div class="meta">${esc(r.status)}<br>Cutoff ${esc(r.cutoff)}<br>Snapshot <code>${esc(r.snapshot)}</code><br>SHA-256 ${esc(r.sha12)}&hellip;</div>`;
+  $("chips").innerHTML = Object.keys(info.whatif).map(o => `<button class="chip" data-o="${o}" title="${esc(info.whatif[o])}">${CHIP[o] || o}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b => b.onclick = () => start(liveUrl("whatif", "&opt=" + encodeURIComponent(b.dataset.o))));
+  $("suggList").innerHTML = SUGG.map(s => `<option value="${esc(s)}"></option>`).join("");
+  $("runSel").innerHTML = info.runs.length ? info.runs.map(x => `<option value="${esc(x.file)}">${esc(x.label)}</option>`).join("") : `<option value="">No saved runs yet</option>`;
+  $("runDrill").title = "Plants one hidden error (one of: " + info.drills.join(", ") + ") in a temporary copy of the record; nobody is told which until the end";
+  if (!info.claude) { $("runCheck").title = "Claude Code CLI not found on this machine: use Replay"; }
+}
+function setMode(m) {
+  S.mode = m; $("mLive").classList.toggle("on", m === "live"); $("mReplay").classList.toggle("on", m === "replay");
+  $("liveRow1").hidden = $("liveRow2").hidden = m !== "live"; $("replayRow").hidden = m !== "replay"; load();
+}
+function setDepth(d) { S.depth = d; $("dFast").classList.toggle("on", d === "fast"); $("dDeep").classList.toggle("on", d === "deep"); }
+function setFs(px) { S.fs = Math.max(12, Math.min(24, px)); document.documentElement.style.setProperty("--fs", S.fs + "px"); try { localStorage.setItem("demo_fs", S.fs); } catch (e) {} }
+
+$("mLive").onclick = () => setMode("live"); $("mReplay").onclick = () => setMode("replay");
+$("dFast").onclick = () => setDepth("fast"); $("dDeep").onclick = () => setDepth("deep");
+$("runCheck").onclick = () => start(liveUrl("check"));
+$("runDrill").onclick = () => start(liveUrl("drill"));
+$("runAsk").onclick = ask; $("ask").onkeydown = e => { if (e.key === "Enter") ask(); };
+$("play").onclick = () => $("runSel").value && start(`/api/replay?file=${encodeURIComponent($("runSel").value)}&speed=${$("speed").value}`, +$("speed").value);
+$("stop").onclick = async () => { if (S.mode === "live") await fetch("/api/stop"); finish(); setNow("Stopped by presenter", false); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.running) $("stop").click(); });
+$("reset").onclick = clearAll;
+$("smaller").onclick = () => setFs(S.fs - 1); $("bigger").onclick = () => setFs(S.fs + 1);
+const sign = verdict => { const n = $("signer").value.trim() || "[member]"; $("stamp").textContent = `${verdict} by ${n} at ${new Date().toUTCString().slice(17, 22)} UTC`; stage("human", 0); };
+$("approve").onclick = () => sign("Approved"); $("sendback").onclick = () => sign("Sent back");
+try { const f = +localStorage.getItem("demo_fs"); if (f) setFs(f); } catch (e) {}
+clearAll(); load();
+</script>
+</body>
+</html>

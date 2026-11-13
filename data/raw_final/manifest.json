@@ -1,0 +1,110 @@
+{
+  "retrieved_utc": "2026-11-13T14:29:55+00:00",
+  "files": {
+    "gspc_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "S&P 500 price index daily close (Yahoo Finance chart API, ^GSPC)",
+      "bytes": 1000132,
+      "sha256": "89fb45c3fe0ca8053b0a2c79fca07d81fb90ba08e4df7402e45b06ac73135f3e",
+      "retrieved_utc": "2026-11-13T14:29:56+00:00"
+    },
+    "vix_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "Cboe VIX daily close (Yahoo, ^VIX)",
+      "bytes": 974175,
+      "sha256": "463463d12f73ac242f67e84a325fcd93060bb69d28db4e3b5e47dee1f48df343",
+      "retrieved_utc": "2026-11-13T14:29:56+00:00"
+    },
+    "es_5m.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ES%3DF?range=60d&interval=5m",
+      "role": "E-mini S&P 500 front-month future, 5-minute bars (Yahoo, ES=F)",
+      "bytes": 755412,
+      "sha256": "58f59fa003a93828461bb36273090ed211666b9c3a16aad2adab8e5fd805ae89",
+      "retrieved_utc": "2026-11-13T14:29:56+00:00"
+    },
+    "tnx_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "10-year Treasury yield, % (Yahoo, ^TNX) - long-history proxy for robustness",
+      "bytes": 959432,
+      "sha256": "b360808e9e05241a71c8bcfa4837fbe3e1c4e4e005d298bc3012ff7c854344f4",
+      "retrieved_utc": "2026-11-13T14:29:56+00:00"
+    },
+    "irx_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EIRX?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "13-week T-bill yield, % (Yahoo, ^IRX) - long-history proxy for robustness",
+      "bytes": 972989,
+      "sha256": "0116d64a2d4dc7c6941f1bc95ad9e5fb2887b38d5d173120db7ecf9aa5d5a15d",
+      "retrieved_utc": "2026-11-13T14:29:57+00:00"
+    },
+    "dxy_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "US Dollar Index (Yahoo, DX-Y.NYB) - proxy / gap fill for the supporting USD series",
+      "bytes": 1024838,
+      "sha256": "994f5605a91c4f3c07a943a65165960a075649a64b84f87ef2c589cce8e2fe66",
+      "retrieved_utc": "2026-11-13T14:29:57+00:00"
+    },
+    "gold_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "Gold front-month future (Yahoo, GC=F) - proxy / gap fill for the supporting gold series",
+      "bytes": 606765,
+      "sha256": "d2730eae2d49b9f7aec91f55f0e53f7bc5edc7a5e1c41baafad6cbdaa38f7f8e",
+      "retrieved_utc": "2026-11-13T14:29:57+00:00"
+    },
+    "sox_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ESOX?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "PHLX Semiconductor index (Yahoo, ^SOX) - proxy / gap fill for the supporting semiconductor series",
+      "bytes": 820107,
+      "sha256": "b990992c3d05873a3fb43545d8547e0893d0f15d817f1492cabbd875312b08ea",
+      "retrieved_utc": "2026-11-13T14:29:57+00:00"
+    },
+    "n225_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EN225?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "Nikkei 225 daily close (Yahoo, ^N225) - Asian overnight information",
+      "bytes": 854287,
+      "sha256": "f0efdb3f17007942158a79f260a4db589a5a09a1e4b6a65be454d6352039294e",
+      "retrieved_utc": "2026-11-13T14:29:57+00:00"
+    },
+    "hsi_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EHSI?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "Hang Seng daily close (Yahoo, ^HSI) - Asian overnight information",
+      "bytes": 846446,
+      "sha256": "2975ad0db650cbe1548bc37c1f6864c970d01cb97bf579efcc1f69c5470b9edb",
+      "retrieved_utc": "2026-11-13T14:29:58+00:00"
+    },
+    "kospi_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EKS11?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "KOSPI daily close (Yahoo, ^KS11) - Asian overnight information",
+      "bytes": 772917,
+      "sha256": "600301b05f1af9001d16d66f1cc06536b557228b8b38d17a82412bafe682fcee",
+      "retrieved_utc": "2026-11-13T14:29:58+00:00"
+    },
+    "asx_daily.json": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EAXJO?period1=631152000&period2=1794580195&interval=1d&events=history",
+      "role": "ASX 200 daily close (Yahoo, ^AXJO) - Asian overnight information",
+      "bytes": 770784,
+      "sha256": "6f7113cd00604c5a9181938120d9b96fbbf26118881eaf8b65a4c309162a009c",
+      "retrieved_utc": "2026-11-13T14:29:58+00:00"
+    },
+    "check_cboe_spx.csv": {
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/SPX_History.csv",
+      "role": "INDEPENDENT CHECK: Cboe published SPX daily history",
+      "bytes": 293677,
+      "sha256": "69cf58ab94574082252644571e898ad85077bf19c9101459aee647413750c7fc",
+      "retrieved_utc": "2026-11-13T14:29:58+00:00"
+    },
+    "check_cboe_vix.csv": {
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+      "role": "INDEPENDENT CHECK: Cboe published VIX daily history",
+      "bytes": 474808,
+      "sha256": "2a21208b9e9f61ad60e4d6b028bb9afc85483e4b0b94b69d2f0b1922dfd96820",
+      "retrieved_utc": "2026-11-13T14:29:58+00:00"
+    },
+    "treasury_yields.csv": {
+      "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2020-2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2020-2026&page&_format=csv",
+      "role": "US Treasury daily par yield curve (official); 2 Yr and 10 Yr columns",
+      "bytes": 35768,
+      "sha256": "aa5f6c3fde4ef7a4a44b68b4888d0cb88569eb2b3a7d3da0086b66b850a9f6b7",
+      "retrieved_utc": "2026-11-13T14:30:16+00:00"
+    }
+  }
+}

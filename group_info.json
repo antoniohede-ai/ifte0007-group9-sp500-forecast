@@ -1,0 +1,75 @@
+{
+  "_note": "Filled from the group repository history (10 Nov 2026). Group number, names and IDs filled on 10 Nov 2026 from the list Antonio supplied. Each member must still confirm their responsibilities, checks and AI tool line, then re-run build_report.py and build_slides.py.",
+  "group": "9",
+  "members": [
+    {
+      "name": "Layla Ahmed",
+      "id": "26236281",
+      "responsibilities": "Submission pipeline: data snapshot and cutoff filter, 16-factor screen, futures nowcast, validation, report, slides, evidence ZIP",
+      "checks": "Independent second code path and leak tests; forecast reproduced by Antonio and Jayen (7,543.72 for the 13:45 UTC preview of 10 Nov, 7,598.08 for the 12:00 UTC preview)"
+    },
+    {
+      "name": "Antonio Herrera Despradel",
+      "id": "26051351",
+      "responsibilities": "Pre-registered drift + Asia model (30-test budget), Bloomberg export (UCL terminal), futures test on 07:00 prices, review of all members' work",
+      "checks": "Placebo and sub-period tests; reproduced Layla's package; compared all models like for like"
+    },
+    {
+      "name": "Jayen Rughani",
+      "id": "26150296",
+      "responsibilities": "1.72-million-combination factor search and drift experiments; pre-registered semiconductor test and ES-futures 07:00 test on TradingView data (PR #5); review and ranking of all members' models on common origins (PR #8); group repository, Windows data-hash fix and submission check",
+      "checks": "Tests pre-registered before results; 70/30 unseen-window evaluation; Newey-West t, block bootstrap and reality check; 17 data checks; reproduced Layla's forecast from her rule (7,543.69 vs 7,543.72) and from the evidence ZIP on a second machine (7,598.08)"
+    },
+    {
+      "name": "Mohamed Derbala",
+      "id": "26077489",
+      "responsibilities": "Momentum + RSI machine-learning model (80/20 split), five-session forecasts",
+      "checks": "Reproducible scripts; robustness note on technical indicators"
+    }
+  ],
+  "ai_tools": [
+    "Layla: Claude Code in the Claude desktop app (Claude Sonnet 5.5, later Claude Opus 5.5 in the same session) - data, code, screen, report and slides",
+    "Antonio: Claude Code (Claude Opus 5.5, with Sonnet 5.5 and Haiku 5.5 as helpers; Claude Fable 5.2 for the repo review on 10 Nov) - drift + Asia model, tests, review",
+    "Jayen: Claude Code in the Claude desktop app (Claude Sonnet 5.5 for the search engine, experiments, semiconductor and futures tests and the model review; Claude Opus 5.5 for the submission check on 10 Nov; model recorded in each commit's Co-Authored-By line) - code, runs, write-ups and checks; no other AI tools",
+    "Mohamed: Codex desktop assistant (the model/version is not shown in the chat record); spreadsheet and browser tools used through the assistant - analysis, momentum + RSI model, backtests, charts and presentation material"
+  ],
+  "ai_use_detail": [
+    {
+      "member": "Antonio",
+      "status": "confirmed by Antonio, 10 Nov 2026",
+      "tools": "Claude Code: Claude Opus 5.5 for judgement and review, Sonnet 5.5 for code and drafts, Haiku 5.5 for data pulls and lookups; Claude Fable 5.2 for the repository review on 10 Nov. ChatGPT, Gemini and Meta AI were each asked one identical question on 2 Nov; their answers were treated as ideas to test and none is cited.",
+      "did": "built the drift and factor-testing pipeline, fetched and hashed the public data, ran the 30 pre-registered tests and the Bloomberg futures test, re-ran the other members' models like for like, reviewed the package and the repository.",
+      "instructions": "forecast the S&P 500 close of 20 Nov with nothing published after the cutoff; register each factor in `factors.yaml` before computing any result; select on origins before 2025 only and report every failure; never state a result whose output is not saved; log every correction; Antonio approves factors, drafts and the final number.",
+      "checks": "SHA-256 manifest on every input, placebo and sub-period tests, time-zone tests on known Asian closes, Bloomberg against Yahoo closes on 5,996 days, exact reproduction of this package's preview, a clean-machine rebuild from the evidence ZIP.",
+      "errors": "a VIX value lagged by a day; a final-run command with no date guard; Asian bars dated to the wrong day; Bloomberg futures prices taken from the expiring contract on expiry days; a holdout window inspected too often and demoted to a sanity check; two citations suggested by Gemini that could not be verified and were dropped; Yahoo missing the Nikkei close on 10 Nov, which silently removed the Asia factor."
+    },
+    {
+      "member": "Jayen",
+      "status": "confirmed by Jayen, 10 Nov 2026 (PR #11 and #12 comments)",
+      "tools": "Claude Code in the Claude desktop app (Claude Sonnet 5.5 for the search engine, experiments, semiconductor and futures tests and the model review; Claude Opus 5.5 for the submission check on 10 Nov; model recorded in each commit's Co-Authored-By line) - code, runs, write-ups and checks; no other AI tools.",
+      "did": "wrote and ran the 1.72-million-combination factor search, the drift and ensemble experiments, the 930-origin futures test and the review that ranks every member's model on common origins.",
+      "instructions": "score every candidate walk-forward with no look-ahead; hold back the last 30% as unseen data; commit the plan before the results it governs.",
+      "checks": "unseen-window evaluation, Newey-West t-tests, bootstrap intervals, White's reality check across 16 models, 17 error checks in the review.",
+      "errors": "the search winner lost to plain drift on unseen data and was reported as such; a calendar rule that missed some futures contract rolls was replaced; two wrong S&P closes were found in the group workbook; line-ending conversion on Windows broke data hashes and was fixed; the first review pass missed this package and was redone."
+    },
+    {
+      "member": "Mohamed",
+      "status": "submitted by Mohamed, 10 Nov 2026 (PR #12 comment); approved by Antonio for the group, 10 Nov 2026; accepted by Layla, 10 Nov 2026 (PR #18)",
+      "tools": "Codex desktop assistant (the model/version is not shown in the chat record); spreadsheet and browser tools used through the assistant.",
+      "did": "helped analyze the group's S&P 500 data and one-week forecast; compare candidate factors and models; develop and explain the momentum + RSI analysis; run/interpret forecast-versus-actual backtesting; and prepare charts and class presentation material.",
+      "instructions": "forecast the S&P 500 one week ahead; use the uploaded historical dataset and examine factor changes; use an 80/20 chronological training/test split; compare predictions with actual values; test whether adding RSI improves the momentum model; explain the results in plain language.",
+      "checks": "compare forecasts with actual S&P 500 values in backtesting and report forecast errors; use the requested time-ordered 80/20 split when evaluating the machine-learning version.",
+      "errors": "none recorded."
+    }
+  ],
+  "ai_declaration": [
+    "The group used Claude Code (Sonnet 5.5, Opus 5.5 and Haiku 5.5; Claude Fable 5.2 for one repository review) and the Codex desktop assistant (model/version not shown in the chat record). These tools assisted with data preparation, coding, model and factor analysis, checks, and preparation of the report and slides. Antonio also asked ChatGPT, Gemini and Meta AI the same question once; their answers were treated as ideas to test and were not cited.",
+    "Layla: Claude Code assisted with the data pipeline, factor screen, futures adjustment, validation, report and slides. The work was checked with an independent code path, leakage tests and forecast reproduction.",
+    "Antonio: Claude Code assisted with the drift and Asia model, data and futures tests, and review of the group's work. Checks included pre-registered tests, data comparisons and reproducing the package.",
+    "Jayen: Claude Code assisted with factor searches, model experiments, futures tests and comparisons of the group's models. Evaluation used a held-out time period and statistical checks.",
+    "Mohamed: Codex assisted with analysis of the S&P 500 data and factors, the momentum-plus-RSI model, backtesting, charts and presentation material. Forecasts were compared with actual values, using a chronological 80/20 split for the machine-learning evaluation.",
+    "AI-assisted work was checked against saved outputs and actual data. Timing, data-alignment and futures-roll issues found during testing were corrected; weaker model results were reported as such.",
+    "Each member's detailed entry (tools and models, significant instructions, checks, errors corrected) is in `group_info.json` and the agent's instructions and log are in `agent/AGENT_INSTRUCTIONS.md` and `agent/agent_log.md`, all in the evidence ZIP."
+  ],
+  "ai_declaration_note": "Paragraphs 1-6 are Mohamed's shortened declaration (PR #27, 13 Nov), verbatim; paragraph 7 points to the detail kept in this file. build_report.py prints ai_declaration when present, instead of assembling the long form from ai_tools and ai_use_detail."
+}

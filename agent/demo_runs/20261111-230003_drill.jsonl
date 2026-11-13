@@ -1,0 +1,155 @@
+{"k": "meta", "mode": "live", "cmd": "drill", "opt": "forecast", "question": "", "model": "sonnet", "depth": "fast", "prompt": "Context: this is a classroom demonstration for UCL module IFTE0007 group coursework. The agent checks an academic forecast of the S&P 500 index built from frozen historical data. Nothing is traded and nothing here is investment advice.\n\nYou are the group's research agent. Goal: decide whether the group should submit the forecast record in this folder (S&P 500 official close on Fri 20 Nov 2026, S&P Dow Jones Indices, index points).\nThe brief's rules: every input must be available by the information cutoff, 12:00 UTC (07:00 New York) on the cutoff day; the calculation must be reproducible from the saved inputs; the forecast in the record is the one that is marked.\nBoundary: work only in this folder, use only the frozen snapshot, no internet, nothing published after the cutoff. Never change the forecast record. Run each command exactly as written, from the current folder (do not cd).\n\nYour tools (each takes a few seconds):\n- `python code/demo_tools.py record`: which record and data, what the cutoff removed, the brief's cutoff rule\n- `python code/demo_tools.py recompute`: a separate recalculation, MATCH or DIFFERS for each number\n- `python code/demo_tools.py check`: the package's independent second code path and leak test\n- `python code/demo_tools.py data spx` or `data es`: the raw observations either side of the cutoff\n- `python code/demo_tools.py explain <drift|futures|overnight|cutoff|forecast|check>`: how a number is defined and where in the code\n- `python code/demo_tools.py whatif <change> [<change> ...]` with changes such as drift=mean, drift=median:2010, drift=0.3%, drift=none, futures=none, futures=06:30, overnight=07:00, close=7560.25\n- reading files in this folder.\n\nA good check establishes three things: which record and data are being checked and that nothing after the cutoff was used; that the forecast can be reproduced independently; and whether anything looks wrong, and what it would mean. You decide how to establish them.\nStart with one line \"Plan:\" naming the tools you will use, in order, and why. Use at most four tool calls. Change your plan if a result surprises you, and say so.\nNarrate for an audience. Before each tool call write one line starting \"Checking:\" (what and why). If you expect a particular result, first write \"Expect:\" with a rough number. After each call write \"Found:\" (the key number), then \"Expectation:\" if you made one (right or wrong), then \"Decision:\" (what you will do next and why). If anything does not match, say what it could mean before you decide. Each line under 25 words. No tables, no headings, no bold.\nFinish with one line \"Recommendation:\" (submit or not, and why) and one line \"Would change my mind:\" (one concrete thing). You recommend; the group decides.", "drill": {"variant": "forecast", "field": "outputs/preview/forecast_record.json", "what": "forecast changed from 7,598.08 to 7,580.15 (-17.93 points)"}, "label": "11 Nov 23:00 UTC", "file": "20261111-230003_drill.jsonl", "t": 0.15, "note": "Real run: Claude Code, Sonnet 5.5, 11 Nov 2026, preview snapshot, recorded by the demo page. Only change after recording: Claude Code's 'Shell cwd was reset to <local path>' notice removed from tool outputs."}
+{"k": "init", "model": "claude-sonnet-5-5", "t": 2.02}
+{"k": "open", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "kind": "text", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "Plan: record (", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "which", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " record,", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " data", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": ", cutoff), then", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " recompute (independent num", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "bers), then check (second", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " code path,", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " leak test),", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " then", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " data", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " or", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " explain if something", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " loo", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "ks off.", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "\n\nChecking: which", "t": 4.75}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " record and", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " data are in", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " use, and what the cuto", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "ff removed.\nExpect", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": ": a", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " for", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "ecast near", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": " the lat", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "est S&P 500 close", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": ", with post", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "-cutoff r", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "ows remov", "t": 4.76}
+{"k": "delta", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "text": "ed.", "t": 4.76}
+{"k": "close", "blk": "msg_011CgwyHb2ecTkDdXngSVCHF:0", "t": 4.76}
+{"k": "preparing", "name": "Bash", "t": 4.76}
+{"k": "tool", "id": "toolu_018nPiTtxhZt4ivPEtXd7QEz", "name": "Bash", "command": "python code/demo_tools.py record", "t": 4.78}
+{"k": "result", "id": "toolu_018nPiTtxhZt4ivPEtXd7QEz", "text": "Record (preview): forecast 7,580.15, status 'PREVIEW - NOT BINDING', sha256 434f2eb26f36...\r\nTarget: 2026-11-20 official close (16:00 America/New_York). Cutoff in the record: Tue 10 Nov 2026 12:00 UTC (07:00 New York).\r\n  brief's rule, cutoff at 12:00 UTC: MATCH\r\nSnapshot retrieved: S&P 2026-11-10T14:02:31+00:00, futures 2026-11-10T14:02:33+00:00 (after the cutoff, so later rows are dropped).\r\nLast usable S&P close: Mon 09 Nov = 7,549.94; later daily rows dropped: 0. Horizon h = 9 sessions.\r\n  record's last close 7,549.94 vs raw file 7,549.94: MATCH\r\nFutures used: 7,572.25 at Mon 09 Nov 16:00 New York (cash close) -> 7,581.75 at Tue 10 Nov 07:00 New York (last bar ended by the cutoff); 24 later bars dropped.", "error": false, "t": 9.58}
+{"k": "open", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:0", "kind": "thinking", "t": 14.27}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:0", "text": "", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:0", "text": "", "t": 14.28}
+{"k": "close", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:0", "t": 14.28}
+{"k": "open", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "kind": "thinking", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "The forecast of", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " 7,580.15 is", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " marked \"PREVIE", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "W - NOT BIND", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "ING\", which could matter for subm", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "ission, so I'm fl", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "agging it while", "t": 14.28}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " I recomp", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "ute each", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " number independently to", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " check for a", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": " M", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "ATCH.", "t": 14.29}
+{"k": "delta", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "text": "\n\n", "t": 14.29}
+{"k": "close", "blk": "msg_011CgwyJ9EPUzBfeSx8vtYAZ:1", "t": 14.29}
+{"k": "preparing", "name": "Bash", "t": 14.29}
+{"k": "tool", "id": "toolu_01PkFtFxKwdY8j7VJtQXRUMx", "name": "Bash", "command": "python code/demo_tools.py recompute", "t": 14.3}
+{"k": "result", "id": "toolu_01PkFtFxKwdY8j7VJtQXRUMx", "text": "Separate recalculation from the raw files (not run_model.py), tag preview:\r\n  last close     7,549.94  vs pipeline 7,549.94: MATCH\r\n  drift (median 9-session return since 1990)  0.5563%  vs 0.5563%: MATCH\r\n  futures move (yahoo)  +0.1254%  vs +0.1254%: MATCH\r\n  average overnight move (48 nights, read at 12:00 UTC)  0.0460%  vs 0.0460%: MATCH\r\n  forecast 7,549.94 x exp(0.5563% +0.0794%) = 7,598.08  vs record 7,580.15: DIFFERS by +17.9335\r\n  for comparison: no change 7,549.94; drift only 7,592.05", "error": false, "t": 17.33}
+{"k": "open", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:0", "kind": "thinking", "t": 22.35}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:0", "text": "", "t": 22.35}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:0", "text": "", "t": 22.35}
+{"k": "close", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:0", "t": 22.36}
+{"k": "open", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "kind": "thinking", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "The forecast recomp", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "ute came", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " to", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " 7,598.08 against", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " the record's 7,580.", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "15, a ", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "17.93 gap desp", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "ite mat", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "ching inputs. I'm", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " checking the package's second code path", "t": 22.36}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " and leak test to see which value", "t": 22.37}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": " it supports.", "t": 22.37}
+{"k": "delta", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "text": "\n\n", "t": 22.37}
+{"k": "close", "blk": "msg_011CgwyJiTR2sY5hBFJ6hzED:1", "t": 22.37}
+{"k": "preparing", "name": "Bash", "t": 22.37}
+{"k": "tool", "id": "toolu_01Qz5Apo9RnwonCjn1anLVPQ", "name": "Bash", "command": "python code/demo_tools.py check", "t": 22.38}
+{"k": "result", "id": "toolu_01Qz5Apo9RnwonCjn1anLVPQ", "text": "independent_check.py (second code path + leak test), tag preview: PASS_ALL = True\r\n  drift matches True, futures nowcast matches True, last close matches True, forecast recomputed 7,598.08 matches record True\r\n  leak test: 24 post-cutoff values corrupted on purpose, inputs unchanged = True\r\n  note: that check compares with results.json (7,598.08), not the signed record; forecast_record.json says 7,580.15: DIFFERS by -17.9300", "error": false, "t": 27.24}
+{"k": "open", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "kind": "text", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "Found: the package check", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " pass", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "es, but it compares against results", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": ".json (", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "7,598.08). The sign", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ed for", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ecast_record.json says ", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "7,580.15, so the", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " two files", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " disagree by ", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "17.93.\nExpect", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ation: part", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ly right. The le", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ak test passed, but the for", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ecast mat", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ched the", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " recompute, not the record.", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "\nDecision: the data", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " and method", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " look", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " s", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ound. The probl", "t": 32.04}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "em is that the record is", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " stale or", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " was", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " edited, and", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " the marked for", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ecast is the one that coun", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ts. I'll st", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "op here, since", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " four", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " cal", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ls is", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " the limit and the c", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ause is cl", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ear en", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ough.\n\nRecommendation", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": ":", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " Do not submit as", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " is. The mar", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ked record (", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "7,580.15,", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " a", "t": 32.05}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " non", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "-binding preview) do", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "esn't match", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " the reproducible calculation", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " (7,598.08).", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " The group should regenerate the", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " record from the", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " sa", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ved inputs and confirm", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " it before", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " submitting.", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "\n\nWould change my mind: a", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " docum", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ented reason the record", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " u", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ses a", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " smaller ad", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "justment than the recompute", "t": 32.06}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " (for", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " example a de", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "liberate dr", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ift cho", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ice), or a", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": " regenerated record showing ", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "7,598.08 ", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "with bin", "t": 32.07}
+{"k": "delta", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "text": "ding status.", "t": 32.07}
+{"k": "close", "blk": "msg_011CgwyKSxmx1EKnm7GCstQA:0", "t": 32.08}
+{"k": "end", "ok": true, "turns": 4, "api_s": 18.2, "cost_usd": 0.0352457, "reason": "completed", "t": 32.11}
+{"k": "exit", "code": 0, "t": 32.56}

@@ -1,0 +1,23 @@
+{
+  "status": "REHEARSAL - NOT BINDING",
+  "market": "S&P 500 price index (SPX)",
+  "unit": "index points",
+  "target": "2026-11-06 official close (16:00 America/New_York)",
+  "information_cutoff_utc": "2026-10-30 12:00:00+00:00",
+  "last_usable_close_date": "2026-10-29",
+  "last_usable_close": 7720.39013671875,
+  "forecast": 7663.45,
+  "interval80": [
+    7450.04,
+    7828.24
+  ],
+  "reference_source": "S&P Dow Jones Indices official closing price-index level",
+  "discretionary_adjustment_pct": 0.0,
+  "approved_by": [
+    "",
+    "",
+    "",
+    ""
+  ],
+  "approval_utc": ""
+}

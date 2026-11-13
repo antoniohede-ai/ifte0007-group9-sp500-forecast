@@ -1,0 +1,7 @@
+step,value
+last close S_t,7720.39013671875
+median h-session return m0 (all history) (%),0.4011767932304622
+expected return = m0 + kappa(0.0) x factor fit (%),0.4011767932304622
+futures nowcast adjustment (%),-1.1415033656285152
+discretionary adjustment (%),0.0
+FINAL forecast,7663.45

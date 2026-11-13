@@ -1,0 +1,15 @@
+{
+  "_note": "Results reported by other group members in the group repository (Jayen44/sp500-weekly-predictor, pull requests #5 and #6, merged 10 Nov 2026). They use Bloomberg and TradingView data that may not be redistributed, so they are cited here, not recomputed. Checked against the merged result files on 10 Nov 2026; plans, code and saved outputs are in data/group_evidence/.",
+  "futures_bloomberg": {"who": "Antonio", "source": "data/group_evidence/futures_bloomberg_test31/ (pre-registered test 31; futures_anchor.txt for the errors, compare_mohamed.txt for the t values against drift alone; Bloomberg ES1 1-minute bars, UCL terminal)",
+                        "hurdle_t": 3.16,
+                        "n": 133, "period": "Apr-Oct 2026", "mape_drift": 1.389, "mape_futures": 1.307, "t": 2.50,
+                        "thu_mape_drift": 1.543, "thu_mape_futures": 1.357, "thu_t": 3.49, "mape_nochange": 1.392},
+  "futures_tradingview": {"who": "Jayen", "source": "data/group_evidence/futures_tradingview_930/futures_results.md (pre-registered; TradingView ES1! export)",
+                          "n": 930, "period": "Jan 2023-Oct 2026", "slope": 0.92, "slope_se": 0.16, "mape_drift": 1.570, "mape_futures": 1.540, "t": 2.04},
+  "submitted_model_review": {"who": "Jayen", "source": "data/group_evidence/model_review/REVIEW.md (model M15, the exact submitted rule, Track A: Friday 07:00 New York origins)",
+                             "n": 187, "period": "Jan 2023-Oct 2026", "n_unseen": 55, "unseen_from": "19 Aug 2025",
+                             "mape_model": 1.525, "mape_drift": 1.556, "mape_nochange": 1.603,
+                             "unseen_mape_model": 1.349, "unseen_mape_drift": 1.460, "unseen_mape_nochange": 1.481, "reality_check_p": 0.074},
+  "screen_prereg": {"who": "Antonio", "tests": 30, "hurdle_t": 3.14, "passed": 0},
+  "search": {"who": "Jayen", "combinations": "1.72 million", "finding": "best in-sample model lost to plain drift on unseen data"}
+}

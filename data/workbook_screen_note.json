@@ -1,0 +1,6 @@
+{
+  "_note": "Validation t of the four candidates that need licensed Bloomberg data (group workbook), from the 10 Nov run with the workbook (outputs/now/tables/factor_screen.csv, macro window 2018-2026). The submitted build uses public data only, so these rows are reported here instead of in Table 3.",
+  "t_valid": {"esi": -0.56, "desi20": -0.45, "dcpi63": -1.23, "dppi63": -1.51},
+  "t_test": {"esi": -1.01, "desi20": -1.37, "dcpi63": -0.59, "dppi63": -1.37},
+  "passed": 0
+}

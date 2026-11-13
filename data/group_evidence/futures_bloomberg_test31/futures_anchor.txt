@@ -1,0 +1,13 @@
+Test 31: futures start (pre-registered, notes/prereg_futures_anchor.md). Errors: mean absolute % vs the close 6 trading days after the origin.
+Origins 2026-04-21 to 2026-10-30; overnight moves: Bloomberg to 2 Nov, Yahoo after. NW t with 5 lags; hurdle |t| >= 3.16.
+
+All origins: n=133 | nochange 1.392%, A 1.389%, B 1.381%, C 1.307%, D 1.312% | C vs B gain +0.0746 t 2.31; D vs C gain -0.0058 t -0.61
+First half: n=66 | nochange 1.546%, A 1.464%, B 1.463%, C 1.407%, D 1.423% | C vs B gain +0.0560 t 1.01; D vs C gain -0.0157 t -1.07
+Second half: n=67 | nochange 1.240%, A 1.315%, B 1.300%, C 1.207%, D 1.203% | C vs B gain +0.0930 t 3.00; D vs C gain +0.0040 t 0.33
+Thursday origins: n=27 | nochange 1.566%, A 1.543%, B 1.539%, C 1.357%, D 1.377% | C vs B gain +0.1821 t 3.66; D vs C gain -0.0194 t -0.83
+
+Bloomberg vs Yahoo overnight move on the overlap: n=42, correlation 1.000, median abs difference 0.008 pts of %, max 0.032
+Next cash-day return on the overnight move: n=138, slope 1.17, correlation 0.58 (Layla, 48 Yahoo days: slope 1.17, R2 0.26)
+
+Decision rule: adopt C if its gain over B is positive overall and in both halves -> True; keep Asia on top (D) if D beats C overall and in both halves -> False; C passes |t| >= 3.16: False
+Mean overnight move over all 138 days (the e used live): 0.0523%

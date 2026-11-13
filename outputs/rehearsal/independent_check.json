@@ -1,0 +1,28 @@
+{
+  "last_close_matches": true,
+  "last_obs_date_matches": true,
+  "m0_pct_recomputed": 0.4011767932304622,
+  "m0_matches": true,
+  "nowcast_source": "yahoo 5-minute bars",
+  "nowcast_pct_recomputed": -1.1415033656285152,
+  "nowcast_matches": true,
+  "nowcast_sample_days": 41,
+  "quantreg_mu_diff_pp": 0.0,
+  "quantreg_note": "no factor selected: expected return is the median drift m0",
+  "leak_gspc_daily.json": {
+    "bars_corrupted": 7,
+    "inputs_unchanged": true
+  },
+  "leak_vix_daily.json": {
+    "bars_corrupted": 7,
+    "inputs_unchanged": true
+  },
+  "leak_es_5m.json": {
+    "bars_corrupted": 1916,
+    "inputs_unchanged": true
+  },
+  "leak_test_pass": true,
+  "forecast_recomputed": 7663.45,
+  "forecast_matches_record": true,
+  "PASS_ALL": true
+}

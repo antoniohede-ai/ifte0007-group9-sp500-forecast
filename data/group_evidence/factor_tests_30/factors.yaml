@@ -1,0 +1,243 @@
+# Registry. To add a factor: drop a series file via tools/fetch_public.py (or add a `series:` entry
+# pointing at a saved file) and add ONE entry under `factors:`. Formulas live in model/factors.py (FORMULAS).
+# lag_days = calendar days between an observation's date and when it is usable (publication lag).
+series:
+  GSPC:         {source: GSPC,         kind: yahoo, field: close,    lag_days: 0, note: "S&P 500 price index official close (target and baseline)"}
+  RSP_adj:      {source: RSP,          kind: yahoo, field: adjclose, lag_days: 0, note: "Invesco equal-weight S&P 500 ETF, dividend-adjusted"}
+  SPY_adj:      {source: SPY,          kind: yahoo, field: adjclose, lag_days: 0, note: "SPDR S&P 500 ETF, dividend-adjusted"}
+  ESF:          {source: ESF,          kind: yahoo, field: close,    lag_days: 0, note: "ES=F daily only: does NOT measure the 07:00 NY move; fetched for the record, not used as a baseline"}
+  DGS2:         {source: DGS2,         kind: fred,  lag_days: 1, note: "FRED 2y Treasury CMT; conservative 1-day lag"}
+  DGS10:        {source: DGS10,        kind: fred,  lag_days: 1, note: "FRED 10y Treasury CMT; conservative 1-day lag"}
+  DFF:          {source: DFF,          kind: fred,  lag_days: 1, note: "FRED effective fed funds rate"}
+  VIXCLS:       {source: VIXCLS,       kind: fred,  lag_days: 1, note: "FRED VIX close; conservative 1-day lag"}
+  BAMLH0A0HYM2: {source: BAMLH0A0HYM2, kind: fred,  lag_days: 1, note: "ICE BofA US HY OAS; FRED only serves about 3 years"}
+  VIX_CBOE:     {source: VIX_CBOE,     kind: cboe,  lag_days: 0, note: "Cboe VIX close"}
+  N225:         {source: N225,         kind: yahoo, field: close,    lag_days: -1, ffill: false, transform: logret, tz: Asia/Tokyo, done_min: 930,    note: "Nikkei 225 close, dated in exchange time (Tokyo)"}
+  HSI:          {source: HSI,          kind: yahoo, field: close,    lag_days: -1, ffill: false, transform: logret, tz: Asia/Hong_Kong, done_min: 990, note: "Hang Seng close, dated in exchange time (Hong Kong)"}
+  VIX3M:        {source: VIX3M,        kind: cboe,  lag_days: 0, note: "Cboe 3-month VIX close"}
+
+  # Bloomberg export (data/raw/bbg-drop, git-ignored, retrieved 2026-11-03 ~09:40 London). Not in the manifest: hash is recorded at load, retrieved_utc comes from here.
+  BBG_SX5E_OPEN:  {kind: bbg, file: 01b_overnight_proxies.csv, column: "SX5E Index|PX_OPEN", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: -1, ffill: false, note: "SX5E open dated t+1 usable at origin t (exact next calendar day, NaN if no session)"}
+  BBG_SX5E_CLOSE: {kind: bbg, file: 01b_overnight_proxies.csv, column: "SX5E Index|PX_LAST", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: 0, ffill: false, note: "SX5E close dated t; NaN if no session"}
+  BBG_BEST_EPS:   {kind: bbg, file: 02_eps.csv, column: "SPX Index|BEST_EPS", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: 0, note: "S&P 500 blended 12m forward EPS"}
+  BBG_LF98OAS:    {kind: bbg, file: 03_credit.csv, column: "LF98OAS Index|PX_LAST", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: 0, note: "Bloomberg US Corporate HY OAS, bp"}
+  BBG_USGG6M:     {kind: bbg, file: 04_fed_path.csv, column: "USGG6M Index|PX_LAST", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: 0, note: "6-month Treasury bill yield, pct"}
+  BBG_BREADTH50:  {kind: bbg, file: 05_breadth.csv, column: "SPX Index|PCT_MEMB_PX_GT_50D_MOV_AVG", retrieved_utc: "2026-11-03T08:40:00+00:00", lag_days: 0, note: "% of S&P 500 members above 50d MA"}
+
+factors:
+  - name: vix_level
+    description: Log of the VIX close
+    series: [VIX_CBOE]
+    formula: log_level
+    publication_time: "Cboe close 16:15 ET, same day, so before the next morning's cutoff"
+    frequency: daily
+    lookback: 1
+    expected_sign: "ambiguous"   # + via risk premium, - via stress; not chosen a priori
+    mechanism: Implied volatility prices risk; high levels may precede rebounds (risk premium) or further falls (stress).
+    status: public-proxy
+  - name: mom_20d
+    description: 20-trading-day log return of the S&P 500
+    series: [GSPC]
+    formula: logret_n
+    publication_time: "S&P close 16:00 ET"
+    frequency: daily
+    lookback: 20
+    expected_sign: "+"
+    mechanism: Medium-term trend continuation from slow information diffusion.
+    status: public-proxy
+  - name: rev_5d
+    description: 5-trading-day log return of the S&P 500
+    series: [GSPC]
+    formula: logret_n
+    publication_time: "S&P close 16:00 ET"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: Short-term reversal from liquidity-driven overshoot.
+    status: public-proxy
+  - name: d2y_5d
+    description: 5-day change in the 2y Treasury yield (percentage points)
+    series: [DGS2]
+    formula: diff_n
+    publication_time: "H.15 ~16:15 ET; FRED next morning"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: Rising front-end yields tighten financial conditions and raise discount rates.
+    status: public-proxy
+  - name: d10y_5d
+    description: 5-day change in the 10y Treasury yield (percentage points)
+    series: [DGS10]
+    formula: diff_n
+    publication_time: "H.15 ~16:15 ET; FRED next morning"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: Rising long yields raise discount rates on long-duration equity cash flows.
+    status: public-proxy
+  - name: slope_10y2y
+    description: 10y minus 2y Treasury yield (percentage points)
+    series: [DGS10, DGS2]
+    formula: spread_level
+    publication_time: "H.15 ~16:15 ET; FRED next morning"
+    frequency: daily
+    lookback: 1
+    expected_sign: "+"
+    mechanism: A steeper curve signals better growth expectations / easier policy path.
+    status: public-proxy
+  - name: vix_vix3m_ratio
+    description: Log of VIX / VIX3M (term-structure slope, inverted when above 0)
+    series: [VIX_CBOE, VIX3M]
+    formula: log_ratio
+    publication_time: "Cboe close 16:15 ET"
+    frequency: daily
+    lookback: 1
+    expected_sign: "+"
+    mechanism: Inversion marks acute near-term stress that tends to mean-revert (contrarian).
+    status: public-proxy
+  - name: hy_spread_chg_5d
+    description: 5-day change in ICE BofA US high-yield OAS (percentage points); FRED history is about 3 years only
+    series: [BAMLH0A0HYM2]
+    formula: diff_n
+    publication_time: "ICE, FRED next morning"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: Widening credit spreads signal rising default risk and risk aversion.
+    status: public-proxy
+  - name: fed_path_proxy_2y_dff_chg_5d
+    description: PROXY for the Fed path. 5-day change in (2y yield minus effective fed funds rate)
+    series: [DGS2, DFF]
+    formula: spread_diff_n
+    publication_time: "H.15 ~16:15 ET; FRED next morning"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: A 2y yield rising relative to the policy rate means the market prices a tighter path.
+    status: public-proxy
+  - name: breadth_proxy_rsp_spy_20d
+    description: PROXY for breadth. 20-day log return of RSP minus SPY (equal-weight vs cap-weight)
+    series: [RSP_adj, SPY_adj]
+    formula: rel_logret_n
+    publication_time: "NYSE Arca close 16:00 ET"
+    frequency: daily
+    lookback: 20
+    expected_sign: "+"
+    mechanism: Broad participation (equal-weight outperforming) signals a healthier rally.
+    status: public-proxy
+  - {name: eps_revisions_fwd, description: "Forward EPS revision breadth", series: [], formula: none, publication_time: "Bloomberg, daily", frequency: daily, lookback: 20, expected_sign: "+", mechanism: "Upward estimate revisions precede price gains.", status: bloomberg-pending}
+  - {name: true_breadth, description: "Advance/decline or % of members above 50d MA", series: [], formula: none, publication_time: "Bloomberg, daily close", frequency: daily, lookback: 1, expected_sign: "+", mechanism: "Broad participation supports index moves.", status: bloomberg-pending}
+  - {name: implied_fed_path, description: "Market-implied change in policy rate (OIS/fed funds futures)", series: [], formula: none, publication_time: "Bloomberg, intraday", frequency: daily, lookback: 5, expected_sign: "-", mechanism: "Tighter implied path lowers equity valuations.", status: bloomberg-pending}
+  - {name: futures_0700ny, description: "ES futures move from 16:00 NY on the origin day to 07:00 NY (the cutoff) the next morning, less its sample mean; enters the forecast one for one (no fitted weight)", series: [], formula: "log(ES_0700 / ES_1600) - mean overnight move (results/futures_anchor.json)", publication_time: "07:00 ET on the Friday cutoff (bar ending 07:00)", frequency: daily, lookback: 1, expected_sign: "+", mechanism: "ES trades through the night, so its 07:00 price already holds the news since the last official close (Asia, Europe, US data before the open); starting from it updates the level instead of predicting it.", status: bloomberg, decision: "chosen 10 Nov 2026 (test 31, tools/futures_anchor.py): replaces asia_overnight in the live formula; applied in model/forecast.py, not built by factors.build_factors (formula none)"}
+
+  # --- Engineered factors, pre-registered 2 Nov 2026 BEFORE any result was computed for them. Do not edit after testing. ---
+  - name: risk_premium_score
+    description: Average of two expanding z-scores, z(log(VIX/VIX3M)) and z(VIX minus 21-day realised volatility of the S&P 500, annualised, in VIX points)
+    series: [VIX_CBOE, VIX3M, GSPC]
+    formula: risk_premium_score
+    formula_detail: "a = log(VIX/VIX3M); b = VIX - 100*sqrt(252)*std(daily S&P log returns, 21d). z_t = (x_t - mean(x_1..x_t)) / std(x_1..x_t), expanding, min 252 obs, only data known at t. Score = (z(a)+z(b))/2."
+    publication_time: "Cboe close 16:15 ET and S&P close 16:00 ET, same day, usable at the next morning's cutoff"
+    frequency: daily
+    lookback: 21
+    expected_sign: "+"
+    mechanism: A high implied-volatility premium over realised volatility, or an inverted term structure, is compensation for risk that tends to be paid over a short horizon.
+    failure_conditions: "Stress cascades (2008, Mar 2020) where high scores precede further falls; sign unstable across sub-periods; VIX3M history starts later than VIX, which shortens the sample."
+    status: public-proxy
+  - name: rate_shock_regime
+    description: 5-day change in the 2y Treasury yield times the rolling 60-day correlation of daily S&P 500 log returns and daily 2y yield changes
+    series: [DGS2, GSPC]
+    formula: rate_shock_regime
+    formula_detail: "d5 = DGS2_t - DGS2_(t-5); rho = rolling 60-day Pearson correlation of daily S&P log return and daily DGS2 change, both ending at t, min 60 obs; factor = d5 * rho."
+    publication_time: "H.15 ~16:15 ET, FRED next morning (1-day lag); S&P close 16:00 ET"
+    frequency: daily
+    lookback: 60
+    expected_sign: "+"
+    mechanism: Rising yields hurt equities when the stock-bond correlation is negative (inflation is the worry), and hurt less or help when it is positive (growth is the worry); yield rise times a negative correlation is negative.
+    failure_conditions: "The correlation flips sign quickly (a 60-day window lags regime changes); sample is dominated by one regime; very low yield volatility makes the product noise."
+    status: public-proxy
+  - {name: credit_spread, description: "High-yield spread level or change, intended third input of risk_premium_score. Omitted because FRED serves ICE BofA OAS only from Oct 2023", series: [], formula: none, publication_time: "ICE, FRED next morning", frequency: daily, lookback: 5, expected_sign: "-", mechanism: "Wider spreads signal credit stress and risk aversion.", failure_conditions: "Needs full history (Bloomberg) before it can enter any test.", status: bloomberg-pending}
+  - {name: eps_revision_breadth, description: "Share of analyst EPS estimates raised minus share cut, S&P 500 forward EPS", series: [], formula: none, publication_time: "Bloomberg, daily", frequency: daily, lookback: 20, expected_sign: "+", mechanism: "Net upward revisions precede price gains.", failure_conditions: "Revisions already priced in; breadth collapses around earnings seasons.", status: bloomberg-pending}
+
+  # --- Pre-registered 2 Nov 2026 BEFORE any result was computed for it. Do not edit after testing. Budget used becomes 21 of 25. ---
+  - name: asia_overnight
+    description: 50/50 average of the Nikkei 225 and Hang Seng log close-to-close returns on the calendar day AFTER the US origin date, each minus beta times the S&P log return on the origin date
+    series: [N225, HSI, GSPC]
+    formula: asia_overnight
+    formula_detail: "For origin date t, A_m = log return of market m (^N225, ^HSI) from its previous session close to its close dated t+1 (calendar day, exchange-local date). Beta_m = expanding OLS slope of A_m on the S&P log return of the origin date, using only pairs whose Asian date is on or before t. Factor = 0.5*(A_N225 - beta_N225*r_SPX_t) + 0.5*(A_HSI - beta_HSI*r_SPX_t). If a market has no session on t+1 its contribution is 0; if both are closed the factor is 0. Asian series are parsed in exchange timezone, not New York time."
+    publication_time: "Tokyo close 15:00 JST and Hong Kong close 16:00 HKT on t+1, both before 07:00 New York on t+1"
+    frequency: daily
+    lookback: 1
+    expected_sign: "+"
+    mechanism: Asian trading absorbs overnight news not yet in the US cash close; subtracting beta times the S&P return isolates news since the US close.
+    failure_conditions: "The signal merely reflects US futures move already priced in the US close or in the 07:00 baseline; Asian idiosyncratic moves; time-zone misalignment of dates."
+    status: public-proxy
+
+  # --- Pre-registered 3 Nov 2026 BEFORE any result was computed for them. Do not edit after testing. Budget 26-30 of 30, hurdle |t| >= 3.14. ---
+  # Source: Bloomberg Excel add-in export, uni terminal, 3 Nov 2026 (data/raw/bbg-drop, commit 33936f9 of the private drop repo; not committed here).
+  # Same test as every earlier factor: Thursday origins before 2025, expanding walk-forward OLS, shrink 0.5, gain vs expanding-mean drift, Newey-West t.
+  # A 07:00 NY ES baseline cannot be tested: Bloomberg intraday history starts 20 Apr 2026 (about 28 Thursday origins). It is described only, not a test.
+  - name: europe_gap
+    description: Euro Stoxx 50 overnight gap (Friday open vs Thursday close) minus beta times the S&P log return on the origin date
+    series: [BBG_SX5E_OPEN, BBG_SX5E_CLOSE, GSPC]
+    formula: europe_gap
+    formula_detail: "For origin t: G = log(SX5E open dated t+1) - log(SX5E close dated t). Beta = expanding OLS slope of G on the S&P log return of date t, pairs s < t only, min 252. Factor = G - beta*r_SPX_t. No SX5E session on t+1 or t: factor 0."
+    publication_time: "SX5E opens 09:00 CET (03:00 NY; 02:00-04:00 NY in DST-mismatch weeks), before 07:00 NY on t+1. Thursday close 17:30 CET is before the US close, hence the beta adjustment."
+    frequency: daily
+    lookback: 1
+    expected_sign: "+"
+    mechanism: European opening prices absorb news after the US close, later than Asia; removing beta times the US day strips what the US close already priced.
+    failure_conditions: "Index PX_OPEN is a stale first print; news already in the S&P close; overlap with asia_overnight (correlation reported, not tested as a combination)."
+    status: bloomberg
+  - name: eps_rev_20d
+    description: 20-trading-day log change of S&P 500 blended 12-month forward EPS (BEST_EPS, BEST_FPERIOD_OVERRIDE=BF)
+    series: [BBG_BEST_EPS]
+    formula: logret_n
+    publication_time: "Bloomberg consensus value dated t, available by the morning of t+1"
+    frequency: daily
+    lookback: 20
+    expected_sign: "+"
+    mechanism: Net upward analyst revisions signal improving fundamentals that prices absorb slowly. Replaces eps_revision_breadth (no revision-count history on Bloomberg). The blended period's mechanical drift goes into the intercept.
+    failure_conditions: "Revisions already priced; earnings-season clustering; blending creates jumps at fiscal-year ends."
+    status: bloomberg
+  - name: hy_oas_5d
+    description: 5-trading-day change in the Bloomberg US Corporate High Yield OAS (LF98OAS), basis points
+    series: [BBG_LF98OAS]
+    formula: diff_n
+    publication_time: "Index analytics end of day t, available by the morning of t+1"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: Widening credit spreads signal rising risk aversion that equities follow with a lag. Full-history version of credit_spread.
+    failure_conditions: "Credit follows equities rather than leads; signal concentrated in crises."
+    status: bloomberg
+  - name: bill6m_5d
+    description: 5-trading-day change in the 6-month Treasury bill yield (USGG6M), percentage points
+    series: [BBG_USGG6M]
+    formula: diff_n
+    publication_time: "Bloomberg generic yield at the New York close of t"
+    frequency: daily
+    lookback: 5
+    expected_sign: "-"
+    mechanism: A higher expected policy path over the next two to three meetings tightens financial conditions. Chosen over fed funds futures because generic FF contracts roll monthly and jump at each roll.
+    failure_conditions: "Overlaps with the failed 2-year factors; rate moves driven by growth news are good for equities."
+    status: bloomberg
+  - name: breadth_50d
+    description: Share of S&P 500 members above their 50-day moving average (PCT_MEMB_PX_GT_50D_MOV_AVG), level
+    series: [BBG_BREADTH50]
+    formula: level
+    publication_time: "Bloomberg value at the close of t"
+    frequency: daily
+    lookback: 1
+    expected_sign: "-"
+    mechanism: Short-horizon reversal; washed-out breadth precedes bounces and stretched breadth precedes pauses.
+    failure_conditions: "Breadth is momentum (sign +) rather than reversal; regime dependence."
+    status: bloomberg
+
+# Drift variant pre-registered 2 Nov 2026 before testing (not a factor; does not use the factor budget).
+drift_variants:
+  - name: weighted_median
+    description: Weighted median of known 6-day log returns r with weights exp(-r), expanding window
+    rationale: Marking divides by the actual close, so APE = |exp(f - r) - 1| roughly; weights exp(-r) minimise that APE directly.
+    rule: "Preferred to the plain expanding median only if its selection-window score is higher."
+
+# Budget raised 25 -> 30 on 3 Nov 2026 (Antonio) for Bloomberg factors; hurdle |t| >= 3.14. Each new factor is added here and committed before it is tested.

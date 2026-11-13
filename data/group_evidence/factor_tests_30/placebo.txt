@@ -1,0 +1,17 @@
+SELECTION WINDOW ONLY (origins before 2025-01-01); 2025-26 is excluded from every rule here.
+
+Circular-shift placebo: 500 shifts, seed 7, shrink 0.5.
+Best real gain vs drift: 0.0064 pp; placebo best-of-candidates gain: median 0.0029, 95th pct 0.0085.
+Family-wise p (best real vs placebo best): 0.1677
+  vix_level: real -0.0052, p 0.9760
+  mom_20d: real -0.0037, p 0.9281
+  rev_5d: real -0.0068, p 0.9960
+  d2y_5d: real -0.0010, p 0.4930
+  d10y_5d: real -0.0001, p 0.2156
+  slope_10y2y: real -0.0012, p 0.5090
+  vix_vix3m_ratio: real -0.0041, p 0.9242
+  fed_path_proxy_2y_dff_chg_5d: real -0.0004, p 0.2735
+  breadth_proxy_rsp_spy_20d: real -0.0030, p 0.9122
+  risk_premium_score: real -0.0042, p 0.9381
+  rate_shock_regime: real -0.0007, p 0.3713
+  asia_overnight: real 0.0064, p 0.0020

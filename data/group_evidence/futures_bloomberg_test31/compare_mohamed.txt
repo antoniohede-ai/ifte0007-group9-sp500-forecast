@@ -1,0 +1,9 @@
+Mohamed's momentum + RSI re-run at 6 days, walk-forward, Thursday origins (and daily origins where futures exist).
+Errors: mean absolute % (lower is better). NW t on error differences, positive = better than median drift.
+
+Thursdays 2002-2024 (our selection window): n=1096 | nochange 1.784%, median 1.763%, median_asia 1.755%, mohamed 1.792%, median_mohamed 1.765% | t vs median: nochange -2.73, median_asia 1.53, mohamed -3.15, median_mohamed -0.45
+Thursdays 2025-26: n=91 | nochange 1.680%, median 1.682%, median_asia 1.669%, mohamed 1.672%, median_mohamed 1.682% | t vs median: nochange 0.05, median_asia 1.04, mohamed 0.33, median_mohamed -0.02
+Thursdays in Mohamed's test window (30 Aug 2024 - 22 Oct 2026): n=107 | nochange 1.641%, median 1.635%, median_asia 1.628%, mohamed 1.627%, median_mohamed 1.634% | t vs median: nochange -0.18, median_asia 0.59, mohamed 0.29, median_mohamed 0.09
+
+Daily origins Apr-Oct 2026 with a 07:00 futures move: n=133 | nochange 1.392%, median 1.389%, median_asia 1.381%, mohamed 1.372%, median_mohamed 1.380%, median_futures 1.307%, mohamed_futures 1.286% | t vs median: nochange -0.06, median_asia 0.87, mohamed 0.50, median_mohamed 1.32, median_futures 2.50, mohamed_futures 2.21
+  same, Thursdays only: n=27 | nochange 1.566%, median 1.543%, median_asia 1.539%, mohamed 1.559%, median_mohamed 1.541%, median_futures 1.357%, mohamed_futures 1.340% | t vs median: nochange -0.43, median_asia 0.12, mohamed -0.38, median_mohamed 0.24, median_futures 3.49, mohamed_futures 3.00

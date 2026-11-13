@@ -1,0 +1,335 @@
+{
+  "part1": {
+    "2003-2026 all": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 1208,
+        "MAPE_%": 1.758296344816496,
+        "mean_score": 41.33856480902837,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 1208,
+        "MAPE_%": 1.7627810651649936,
+        "mean_score": 41.31191154294097,
+        "t_vs_ref": -0.9337525123740488
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 1208,
+        "MAPE_%": 1.7598647194033712,
+        "mean_score": 41.327123517517,
+        "t_vs_ref": -0.45962986321948446
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 1208,
+        "MAPE_%": 1.7664864085655214,
+        "mean_score": 41.29008140226497,
+        "t_vs_ref": -1.408872619013049
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 1208,
+        "MAPE_%": 1.786810370922984,
+        "mean_score": 41.18298494965673,
+        "t_vs_ref": -2.6019980711203563
+      }
+    ],
+    "2003-2012": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 508,
+        "MAPE_%": 1.90133144467522,
+        "mean_score": 40.711067729153505,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 508,
+        "MAPE_%": 1.9096214115178962,
+        "mean_score": 40.66078130558465,
+        "t_vs_ref": -0.7402088834957847
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 508,
+        "MAPE_%": 1.898751422685935,
+        "mean_score": 40.720553887205995,
+        "t_vs_ref": 0.6486383171423082
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 508,
+        "MAPE_%": 1.902423301938917,
+        "mean_score": 40.695223296221805,
+        "t_vs_ref": -0.13301547806337796
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 508,
+        "MAPE_%": 1.9091995284421708,
+        "mean_score": 40.65426168826259,
+        "t_vs_ref": -0.49351258027972555
+      }
+    ],
+    "2013-2019": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 354,
+        "MAPE_%": 1.3772863287190051,
+        "mean_score": 43.11452262690005,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 354,
+        "MAPE_%": 1.3794667783572911,
+        "mean_score": 43.10299793989506,
+        "t_vs_ref": -0.7547796742346213
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 354,
+        "MAPE_%": 1.381514984540048,
+        "mean_score": 43.092425077299765,
+        "t_vs_ref": -0.6893172767928206
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 354,
+        "MAPE_%": 1.3911317290914376,
+        "mean_score": 43.044341354542816,
+        "t_vs_ref": -1.2772966460222022
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 354,
+        "MAPE_%": 1.4233658143273322,
+        "mean_score": 42.883170928363334,
+        "t_vs_ref": -2.375212205903939
+      }
+    ],
+    "2020-2026": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 346,
+        "MAPE_%": 1.938110549932912,
+        "mean_score": 40.44284067333431,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 346,
+        "MAPE_%": 1.9393659252304625,
+        "mean_score": 40.43540742749376,
+        "t_vs_ref": -1.1034762866194028
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 346,
+        "MAPE_%": 1.9430478433168805,
+        "mean_score": 40.41157617657738,
+        "t_vs_ref": -0.6007532000649008
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 346,
+        "MAPE_%": 1.9509361620341363,
+        "mean_score": 40.368636011408235,
+        "t_vs_ref": -1.0802718272455052
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 346,
+        "MAPE_%": 1.978965518365509,
+        "mean_score": 40.21976408354716,
+        "t_vs_ref": -1.825122379694634
+      }
+    ],
+    "Aug 2025-Oct 2026 (group's unseen window)": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 60,
+        "MAPE_%": 1.5507792792335162,
+        "mean_score": 42.24610360383242,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 60,
+        "MAPE_%": 1.549936971395501,
+        "mean_score": 42.25031514302249,
+        "t_vs_ref": 0.6074407126072614
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 60,
+        "MAPE_%": 1.5366183152310176,
+        "mean_score": 42.31690842384491,
+        "t_vs_ref": 0.7115471213384877
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 60,
+        "MAPE_%": 1.537872467881845,
+        "mean_score": 42.31063766059078,
+        "t_vs_ref": 0.5027680656589978
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 60,
+        "MAPE_%": 1.5586269835306696,
+        "mean_score": 42.20686508234666,
+        "t_vs_ref": -0.1714334167871695
+      }
+    ]
+  },
+  "part2": {
+    "all origins": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 135,
+        "MAPE_%": 1.3782021330370682,
+        "mean_score": 43.108989334814666,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 1990 (Layla) + futures",
+        "n": 135,
+        "MAPE_%": 1.3184079109491078,
+        "mean_score": 43.40796044525446,
+        "t_vs_ref": 1.6799533860249132
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 135,
+        "MAPE_%": 1.377737116239836,
+        "mean_score": 43.11131441880082,
+        "t_vs_ref": 0.35831320872772415
+      },
+      {
+        "model": "Median since 2000 (Antonio) + futures",
+        "n": 135,
+        "MAPE_%": 1.3177227339798774,
+        "mean_score": 43.41138633010061,
+        "t_vs_ref": 1.690514502103358
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 135,
+        "MAPE_%": 1.3718868993634727,
+        "mean_score": 43.14056550318264,
+        "t_vs_ref": 0.2772463272580361
+      },
+      {
+        "model": "Fixed +0.25% (Jayen) + futures",
+        "n": 135,
+        "MAPE_%": 1.312732877332672,
+        "mean_score": 43.43633561333663,
+        "t_vs_ref": 1.4878852946827046
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 135,
+        "MAPE_%": 1.3722550412633634,
+        "mean_score": 43.138724793683195,
+        "t_vs_ref": 0.1974764216886264
+      },
+      {
+        "model": "Mean since 1990 + futures",
+        "n": 135,
+        "MAPE_%": 1.3139219629917525,
+        "mean_score": 43.43039018504123,
+        "t_vs_ref": 1.3222134117892725
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 135,
+        "MAPE_%": 1.3806799189481067,
+        "mean_score": 43.09660040525947,
+        "t_vs_ref": -0.042053973358267015
+      },
+      {
+        "model": "No drift (unchanged) + futures",
+        "n": 135,
+        "MAPE_%": 1.3230924112795968,
+        "mean_score": 43.38453794360203,
+        "t_vs_ref": 0.7741056454362549
+      }
+    ],
+    "Thursday origins": [
+      {
+        "model": "Median since 1990 (Layla)",
+        "n": 28,
+        "MAPE_%": 1.528234951810506,
+        "mean_score": 42.35882524094746,
+        "t_vs_ref": NaN
+      },
+      {
+        "model": "Median since 1990 (Layla) + futures",
+        "n": 28,
+        "MAPE_%": 1.3824834127485868,
+        "mean_score": 43.08758293625707,
+        "t_vs_ref": 2.2631674646394386
+      },
+      {
+        "model": "Median since 2000 (Antonio)",
+        "n": 28,
+        "MAPE_%": 1.5282155389692849,
+        "mean_score": 42.35892230515358,
+        "t_vs_ref": 0.015070304018321443
+      },
+      {
+        "model": "Median since 2000 (Antonio) + futures",
+        "n": 28,
+        "MAPE_%": 1.3819713597716976,
+        "mean_score": 43.090143201141515,
+        "t_vs_ref": 2.283898099298284
+      },
+      {
+        "model": "Fixed +0.25% (Jayen)",
+        "n": 28,
+        "MAPE_%": 1.5254861148890513,
+        "mean_score": 42.372569425554744,
+        "t_vs_ref": 0.1170613604632405
+      },
+      {
+        "model": "Fixed +0.25% (Jayen) + futures",
+        "n": 28,
+        "MAPE_%": 1.3730824108149218,
+        "mean_score": 43.13458794592539,
+        "t_vs_ref": 2.3865205853799187
+      },
+      {
+        "model": "Mean since 1990",
+        "n": 28,
+        "MAPE_%": 1.528152075412622,
+        "mean_score": 42.35923962293689,
+        "t_vs_ref": 0.0026930502588950276
+      },
+      {
+        "model": "Mean since 1990 + futures",
+        "n": 28,
+        "MAPE_%": 1.3728413462287876,
+        "mean_score": 43.135793268856055,
+        "t_vs_ref": 2.276568734074142
+      },
+      {
+        "model": "No drift (unchanged)",
+        "n": 28,
+        "MAPE_%": 1.5388716334083463,
+        "mean_score": 42.305641832958266,
+        "t_vs_ref": -0.17834549480257675
+      },
+      {
+        "model": "No drift (unchanged) + futures",
+        "n": 28,
+        "MAPE_%": 1.3756047251847705,
+        "mean_score": 43.12197637407615,
+        "t_vs_ref": 1.7049073314811682
+      }
+    ]
+  }
+}

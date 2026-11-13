@@ -1,0 +1,6 @@
+Futures model with different drifts, 133 origins 2026-04-21 to 2026-10-30 (Thursdays n=27).
+ours: all 1.307%, Thursdays 1.357%, drift now 0.345%
+laila: all 1.307%, Thursdays 1.357%, drift now 0.392%
+fixed: all 1.301%, Thursdays 1.353%, drift now 0.250%
+no_drift: all 1.313%, Thursdays 1.363%, drift now 0.000%
+ours vs laila: NW t 0.13 (positive = ours better)

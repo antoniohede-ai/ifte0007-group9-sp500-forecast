@@ -1,0 +1,4 @@
+scenario,spx_shock_pct,vix,mu_pct,base_index,forecast
+"Relief: index +2%, VIX 17, 2Y -10bp, semis +5%",2.0,17.0,0.4011767932304622,7876.352363009817,7908.013927804268
+"Adverse A: AI/chip rout continues (index -4%, VIX 30, semis -10%)",-4.0,30.0,0.4011767932304622,7417.669309495135,7447.487048296329
+"Adverse B: hawkish shock (index -3%, VIX 27, 2Y +20bp, 10Y +15bp, USD +1.5%)",-3.0,27.0,0.4011767932304622,7492.218125430667,7522.335537488884

@@ -1,0 +1,5 @@
+{
+  "_note": "Known faulty Yahoo Finance daily values, replaced by the Cboe published value. Each date was confirmed three ways: Cboe history, the group's supporting research workbook and Yahoo disagree, and Cboe equals the workbook. Cboe itself has one known stale value (2000-12-22) which is NOT corrected because Yahoo is right there.",
+  "spx": {"2021-08-11": 4447.70},
+  "vix": {"2021-08-11": 16.06, "2026-02-06": 17.76}
+}

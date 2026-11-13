@@ -1,0 +1,18 @@
+# Packages needed to rebuild the evidence package (python code/run_all.py --final). Python 3.12 or later.
+# Step 1 of the README (code/demo_tools.py recompute) needs only numpy and pandas.
+#
+# Tested with (two environments, same forecast, drift, futures move and PASS_ALL = true):
+#   author's machine, 10 Nov 2026:  Python 3.12.10, numpy 2.5.4, pandas 3.1.0, statsmodels 0.15.0
+#   clean rebuild, 13 Nov 2026:     Python 3.14.0,  numpy 2.3.4, pandas 2.3.3, statsmodels 0.14.5
+#   both: matplotlib 3.11.2, reportlab 5.1.0, python-docx 1.2.0, python-pptx 1.0.2
+#   clean rebuild also: openpyxl 3.1.5, pillow 13.0.0, requests 2.32.5
+numpy
+pandas
+statsmodels
+matplotlib
+openpyxl
+python-docx
+python-pptx
+reportlab
+pillow
+requests

@@ -1,0 +1,20 @@
+candidate,expected_sign,n,slope,sign_ok,gain_vs_drift,t_vs_drift,t_ok,periods,sub_ok,placebo_p,placebo_ok,verdict,note
+vix_level,ambiguous,1163.0,-8.770398294323277e-05,False,-0.005199615264117196,-1.0766136701109121,False,"2003-09: slope -0.0032, gain -0.025; 2010-19: slope +0.0034, gain +0.003; 2020-24: slope +0.003, gain -0.001",False,0.9760479041916168,False,FAIL,"first scored origin 2002-01-31; ambiguous sign: unstable, fails sign check"
+mom_20d,+,1159.0,0.005194789096054956,True,-0.003671507286302779,-2.3565469687880656,False,"2003-09: slope +0.011, gain -0.002; 2010-19: slope -0.017, gain -0.001; 2020-24: slope -0.00043, gain -0.001",False,0.9281437125748503,False,FAIL,first scored origin 2002-02-28
+rev_5d,-,1162.0,-0.0392649223902195,True,-0.006757158407635815,-2.620210146487588,False,"2003-09: slope -0.054, gain -0.005; 2010-19: slope -0.072, gain -0.002; 2020-24: slope -0.027, gain -0.008",False,0.9960079840319361,False,FAIL,first scored origin 2002-02-07
+d2y_5d,-,1162.0,-0.005578920339050793,True,-0.001030014322711288,-0.43231215156592606,False,"2003-09: slope -0.02, gain +0.007; 2010-19: slope -0.0071, gain -0.003; 2020-24: slope +0.0075, gain -0.003",False,0.4930139720558882,False,FAIL,first scored origin 2002-02-07
+d10y_5d,-,1162.0,-0.013714376056454206,True,-6.727839071231183e-05,-0.023439220741485228,False,"2003-09: slope -0.031, gain +0.009; 2010-19: slope +0.0013, gain -0.006; 2020-24: slope -0.0067, gain +0.001",False,0.2155688622754491,False,FAIL,first scored origin 2002-02-07
+slope_10y2y,+,1163.0,-0.0004627369270570757,False,-0.001242430725966976,-0.536348595212922,False,"2003-09: slope +0.00041, gain +0.004; 2010-19: slope -0.0013, gain +0.000; 2020-24: slope +0.0017, gain -0.004",False,0.5089820359281437,False,FAIL,first scored origin 2002-01-31
+vix_vix3m_ratio,+,671.0,0.008301793019300329,True,-0.004084845181951082,-1.772394470640758,False,"2010-19: slope +0.025, gain -0.004; 2020-24: slope -0.018, gain -0.004",False,0.9241516966067864,False,FAIL,first scored origin 2011-10-13
+hy_spread_chg_5d,-,,,,,,,,,,,INSUFFICIENT HISTORY,no selection-window data
+fed_path_proxy_2y_dff_chg_5d,-,1162.0,-0.008862819276800762,True,-0.0004475998419765987,-0.3121319707475586,False,"2003-09: slope -0.018, gain +0.003; 2010-19: slope +0.0019, gain -0.002; 2020-24: slope -7.8e-05, gain -0.002",False,0.27345309381237526,False,FAIL,first scored origin 2002-02-07
+breadth_proxy_rsp_spy_20d,+,990.0,0.0327091476158329,True,-0.002994824166437969,-1.096708763758009,False,"2003-09: slope +0.18, gain -0.000; 2010-19: slope +0.049, gain -0.002; 2020-24: slope -0.066, gain -0.007",False,0.9121756487025948,False,FAIL,first scored origin 2005-07-07
+eps_revisions_fwd,+,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+true_breadth,+,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+implied_fed_path,-,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+futures_0700ny,+,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+risk_premium_score,+,620.0,0.00017513033269278127,True,-0.004215665982238674,-1.7337977037189443,False,"2010-19: slope +0.0029, gain -0.005; 2020-24: slope -0.0028, gain -0.004",False,0.93812375249501,False,FAIL,first scored origin 2012-10-11
+rate_shock_regime,+,1151.0,-0.05776418809197622,False,-0.0006965505887745767,-0.4505824254198095,False,"2003-09: slope +0.045, gain -0.004; 2010-19: slope -0.0037, gain +0.000; 2020-24: slope -0.26, gain +0.002",False,0.3712574850299401,False,FAIL,first scored origin 2002-04-25
+credit_spread,-,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+eps_revision_breadth,+,,,,,,,,,,,INSUFFICIENT HISTORY,"bloomberg-pending, no data"
+asia_overnight,+,1096.0,0.21783769854532764,True,0.006401235992587555,1.3231248356271752,False,"2003-09: slope +0.19, gain +0.010; 2010-19: slope +0.36, gain +0.013; 2020-24: slope +0.085, gain -0.010",False,0.001996007984031936,True,FAIL,first scored origin 2003-05-29
