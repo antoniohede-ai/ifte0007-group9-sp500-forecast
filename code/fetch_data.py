@@ -3,6 +3,7 @@
 Reproduction by a marker does NOT need this script: run_model.py works from the saved files alone.
 
     python code/fetch_data.py --out data/raw_final --zaki "Zaki's data.xlsx"
+    python code/fetch_data.py --out data/agent_demo --quick      # only what the demo agent needs (3 files, a few seconds)
 """
 import argparse
 import datetime as dt
@@ -38,6 +39,9 @@ SOURCES = {
 }
 
 
+QUICK = ("gspc_daily.json", "es_5m.json", "check_cboe_spx.csv")      # S&P 500 closes, futures bars, Cboe reconciliation
+
+
 def _rec(manifest, out, name, url, role, content):
     (out / name).write_bytes(content)
     manifest["files"][name] = {"url": url, "role": role, "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest(),
@@ -50,12 +54,18 @@ def main() -> None:
     ap.add_argument("--out", default="data/raw_live")
     ap.add_argument("--zaki", default=None, help="path to Zaki's data workbook (frozen copy is stored next to the raw files)")
     ap.add_argument("--only", nargs="*", default=None, help="fetch only these file names and merge them into the existing manifest")
+    ap.add_argument("--quick", action="store_true", help="fetch only gspc_daily.json, es_5m.json and check_cboe_spx.csv into a fresh manifest (used by the demo agent)")
     a = ap.parse_args()
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    if a.quick:
+        a.only = list(QUICK)
+        if not (out / "manifest.json").exists():
+            (out / "manifest.json").write_text(json.dumps({"retrieved_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "files": {}}), encoding="utf-8")
     now = int(time.time())
     manifest = {"retrieved_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "files": {}}
     if a.only:
         manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+        manifest["retrieved_utc"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     for name, (url, role) in SOURCES.items():
         if a.only and name not in a.only:
             continue
