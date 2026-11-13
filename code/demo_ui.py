@@ -51,13 +51,52 @@ ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 SHELL_NOTE = re.compile(r"^\s*Shell cwd was reset to .*$\n?", re.M)
 TOOLS_ALLOWED = ["Bash(python code/demo_tools.py:*)", "Read"]
 DRILLS = ("forecast", "close", "cutoff")
-GIVEN = {
-    "goal": "Check and explain the group's forecast of the S&P 500 official close on Fri 20 Nov 2026, then recommend whether to submit it.",
-    "boundary": "This folder only. Frozen snapshot, nothing published after the cutoff, no internet.",
-    "tools": "python code/demo_tools.py (record, recompute, check, data, explain, whatif); reading files, including read-only commands such as ls and cat.",
-    "not_allowed": "Internet (web tools off; network commands refused), writing or editing any file, any other program, trading.",
-    "human": "The agent recommends. A group member reads the check and signs the record.",
+MODES = {
+    "demo": {
+        "label": "Demo: fresh data, information cutoff applied",
+        "goal": "Check and explain the group's forecast of the S&P 500 official close on Fri 20 Nov 2026, then recommend whether to submit it.",
+        "boundary": "This folder only. Fresh public data pulled by the agent's fetch tool, but the information cutoff (Fri 13 Nov 2026 12:00 UTC, 07:00 New York) still applies: anything published later is dropped.",
+        "text_boundary": ("Mode: DEMO. Pull fresh public data with `fetch`; the information cutoff (Fri 13 Nov 2026 12:00 UTC, 07:00 New York) still applies and the tools drop "
+                          "everything published later. The only network access is `fetch`, which contacts a fixed list of public sources."),
+        "text_goal": ("You are the group's research agent. Goal: decide whether the group should submit the forecast record in this folder "
+                      "(S&P 500 official close on Fri 20 Nov 2026, S&P Dow Jones Indices, index points)."),
+        "text_finish": ('Finish with one line "Recommendation:" (submit or not, and why) and one line "Would change my mind:" (one concrete thing). '
+                        'You recommend; the group decides.'),
+        "fetchlines": ("- `python code/demo_tools.py --mode demo fetch`: pull fresh public data now (the only tool that uses the internet; fixed sources, writes only to data/agent_demo)\n"
+                       "- `python code/demo_tools.py --mode demo compare`: the fresh pull against the frozen snapshot, row by row"),
+        "checkline": "- `python code/demo_tools.py --mode demo check`: the package's independent second code path and leak test",
+    },
+    "full": {
+        "label": "Full: all data to now, no cutoff (look-ahead)",
+        "goal": "Using everything published up to now, report how the group's signed forecast of the S&P 500 official close on Fri 20 Nov 2026 compares with what the same frozen model gives now, and what has happened since the cutoff.",
+        "boundary": "This folder only. Fresh public data pulled by the agent's fetch tool, with no information cutoff: a NON-BINDING look-ahead. The signed forecast record is never changed.",
+        "text_boundary": ("Mode: FULL. Pull everything published up to now with `fetch`. There is no information cutoff here, so every result is a NON-BINDING look-ahead; "
+                          "the signed forecast record is the one that is marked and must not be changed. Say clearly whenever a number uses data from after the cutoff. "
+                          "The only network access is `fetch`, which contacts a fixed list of public sources."),
+        "text_goal": ("You are the group's research agent. Goal: with all data up to now, report how the group's signed forecast record in this folder "
+                      "(S&P 500 official close on Fri 20 Nov 2026, S&P Dow Jones Indices, index points) compares with what the same frozen model gives now "
+                      "and with what has happened since the cutoff, and whether anything in the record looks wrong."),
+        "text_finish": ('Finish with one line "Recommendation:" (whether the signed forecast needs attention, and why; the model is frozen and the record cannot change here) '
+                        'and one line "Would change my mind:" (one concrete thing). You recommend; the group decides.'),
+        "fetchlines": ("- `python code/demo_tools.py --mode full fetch`: pull everything published up to now (the only tool that uses the internet; fixed sources, writes only to data/agent_full)\n"
+                       "- `python code/demo_tools.py --mode full compare`: fresh pull against the frozen snapshot, and what has moved since the cutoff"),
+        "checkline": "",
+    },
 }
+
+
+def given_for(dm):
+    m = MODES[dm]
+    return {
+        "goal": m["goal"], "boundary": m["boundary"],
+        "tools": "python code/demo_tools.py (fetch, compare, record, recompute, " + ("check, " if dm == "demo" else "") + "data, explain, whatif); reading files, including read-only commands such as ls and cat.",
+        "not_allowed": "Any internet except the fetch tool (web tools off; network commands refused), writing or editing any file, any other program, trading.",
+        "human": "The agent recommends. A group member reads the check and signs the record." if dm == "demo" else "The agent reports. The signed forecast is unchanged and cannot be changed by a look-ahead.",
+    }
+
+
+def mode_of(x):
+    return x if x in MODES else "demo"
 
 
 # ---------------------------------------------------------------------------------------------- helpers
@@ -73,9 +112,15 @@ def claude_cmd():
     return [sys.executable, b] if b.endswith(".py") else [b]
 
 
-def prompt_for(root, cmd, arg):
+def prompt_for(root, cmd, arg, dm="demo"):
+    m = MODES[mode_of(dm)]
     text = (root / "agent" / "demo_prompts" / f"{cmd}.md").read_text(encoding="utf-8").replace("\r\n", "\n")
-    return re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S).replace("$ARGUMENTS", arg or "").strip()
+    text = re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S)
+    for tok, val in (("$FETCHLINES", m["fetchlines"]), ("$CHECKLINE", m["checkline"]), ("$GOAL", m["text_goal"]),
+                     ("$BOUNDARY", m["text_boundary"]), ("$FINISH", m["text_finish"]), ("$MODE", "--mode " + mode_of(dm))):
+        text = text.replace(tok, val)
+    text = re.sub(r"\n\s*\n(?=- )", "\n", text)       # an empty tool line (no check tool in Full mode) leaves no gap
+    return text.replace("$ARGUMENTS", arg or "").strip()
 
 
 def clean_question(q):
@@ -104,18 +149,25 @@ def run_meta(path):
             "ok": bool(ok), "mtime": path.stat().st_mtime}
 
 
-def info():
+def info(dm="demo"):
+    dm = mode_of(dm)
     try:
-        c = demo_tools.ctx(None)
+        c = demo_tools.ctx(None, dm)
         rec = c["rec"]
+        if c["fresh"]:
+            data = f"fresh pull {c['got']:%d %b %H:%M} UTC in data/agent_{dm}"
+        elif dm == "full":
+            data = "no data yet: the agent's first step is to fetch"
+        else:
+            data = f"frozen snapshot {c['frozen'].name} until the agent fetches"
         record = {"tag": c["tag"], "forecast": rec["forecast"], "status": rec.get("status", ""), "target": rec["target"],
-                  "cutoff": f"{c['cut']:%a %d %b %Y %H:%M} UTC ({c['cut'].tz_convert('America/New_York'):%H:%M} New York)",
-                  "sha12": hashlib.sha256(c["rec_path"].read_bytes()).hexdigest()[:12], "snapshot": str(c["snap"].relative_to(ROOT))}
+                  "cutoff": f"{c['ref_cut']:%a %d %b %Y %H:%M} UTC ({c['ref_cut'].tz_convert('America/New_York'):%H:%M} New York)",
+                  "sha12": hashlib.sha256(c["rec_path"].read_bytes()).hexdigest()[:12], "snapshot": data}
     except Exception as e:      # noqa: BLE001
         record = {"error": str(e)}
     # finished runs first, newest first (file names start with the UTC start time, so they sort by time even after copying)
     runs = sorted((run_meta(p) for p in RUNS.glob("*.jsonl")), key=lambda r: (r["ok"], r["file"]), reverse=True) if RUNS.exists() else []
-    return {"given": GIVEN, "record": record, "whatif": demo_tools.WHATIF, "runs": runs, "claude": bool(claude_cmd()), "drills": list(DRILLS)}
+    return {"given": given_for(dm), "dm": dm, "modes": {k: v["label"] for k, v in MODES.items()}, "record": record, "whatif": demo_tools.WHATIF, "runs": runs, "claude": bool(claude_cmd()), "drills": list(DRILLS)}
 
 
 class Stream:
@@ -236,9 +288,9 @@ class H(BaseHTTPRequestHandler):
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Content-Length", str(len(b))); self.end_headers()
             self.wfile.write(b)
         elif u.path == "/api/info":
-            self._json(info())
+            self._json(info(q.get("dm", "demo")))
         elif u.path == "/api/run":
-            self.live(q.get("cmd", "check"), q.get("opt", ""), q.get("model", "sonnet"), q.get("depth", "fast"), q.get("q", ""))
+            self.live(q.get("cmd", "check"), q.get("opt", ""), q.get("model", "sonnet"), q.get("depth", "fast"), q.get("q", ""), mode_of(q.get("dm")))
         elif u.path == "/api/stop":
             p = CURRENT["proc"]
             if p and p.poll() is None:
@@ -254,10 +306,12 @@ class H(BaseHTTPRequestHandler):
             self._json({"error": "not found"}, 404)
 
     # ------------------------------------------------------------------ live run
-    def live(self, cmd, opt, model, depth, question):
+    def live(self, cmd, opt, model, depth, question, dm="demo"):
         self._sse_start()
         question = clean_question(question)
         opts = opt.split()
+        if cmd == "drill" and dm == "full":
+            self._send({"k": "error", "t": 0, "text": "The fault drill tests the signed record under the information cutoff, so it runs in Demo mode only."}); return
         bad = (cmd not in ("check", "whatif", "ask", "drill") or (cmd == "whatif" and (not opts or not all(demo_tools.OPT_RE.match(o) for o in opts)))
                or (cmd == "ask" and not question) or model not in ("sonnet", "haiku", "opus") or depth not in ("fast", "deep"))
         if bad:
@@ -274,7 +328,7 @@ class H(BaseHTTPRequestHandler):
                 sandbox, drill = make_drill(opt or None)   # opt may name a variant (testing); default random
                 root = sandbox
             pcmd = {"drill": "check"}.get(cmd, cmd)
-            prompt = prompt_for(root, pcmd, question if cmd == "ask" else opt)
+            prompt = prompt_for(root, pcmd, question if cmd == "ask" else opt, dm)
             args = [*exe, "-p", prompt, "--model", model, "--effort", "low" if depth == "fast" else "medium",
                     "--output-format", "stream-json", "--verbose", "--include-partial-messages",
                     "--tools", "Bash,Read", "--allowedTools", *TOOLS_ALLOWED, "--disallowedTools", "WebFetch", "WebSearch",
@@ -286,9 +340,9 @@ class H(BaseHTTPRequestHandler):
                 def emit(ev):
                     ev["t"] = round(time.time() - t0, 2)
                     log.write(json.dumps(ev) + "\n"); log.flush(); self._send(ev)
-                emit({"k": "meta", "mode": "live", "cmd": cmd, "opt": opt, "question": question, "model": model, "depth": depth, "prompt": prompt,
+                emit({"k": "meta", "mode": "live", "dm": dm, "cmd": cmd, "opt": opt, "question": question, "model": model, "depth": depth, "prompt": prompt,
                       "drill": drill, "label": f"{dt.datetime.now(dt.timezone.utc):%d %b %H:%M} UTC", "file": name})
-                env = dict(os.environ, PYTHONIOENCODING="utf-8")
+                env = dict(os.environ, PYTHONIOENCODING="utf-8", DEMO_MODE=dm)
                 # stdin closed: otherwise the CLI waits 3 s for piped input before starting
                 p = subprocess.Popen(args, cwd=root, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                      text=True, encoding="utf-8", errors="replace", env=env)

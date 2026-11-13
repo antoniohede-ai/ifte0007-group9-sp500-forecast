@@ -1,5 +1,7 @@
 """demo_tools.py - small, fast, read-only tools the demo agent can call (each takes a few seconds, prints a few lines).
 
+    python code/demo_tools.py fetch                  download fresh public data (Yahoo ^GSPC and ES=F, Cboe) for the current mode
+    python code/demo_tools.py compare                fresh pull against the frozen snapshot; in Full mode, what has moved since the cutoff
     python code/demo_tools.py record                 which record, which data, what the cutoff removed, brief's rules
     python code/demo_tools.py recompute              separate recalculation of drift, futures move and forecast
     python code/demo_tools.py check                  runs code/independent_check.py and summarises it
@@ -12,14 +14,22 @@
         overnight=12utc | 07:00 | none  (clock time for the average overnight move that is subtracted)
         close=<index points>            (a different last official close, e.g. if S&P DJI differs from Yahoo)
 
-Read-only: never writes the forecast record. Uses only the frozen snapshot (no internet).
+Two modes (--mode demo|full, or env DEMO_MODE; default demo):
+  DEMO  the information cutoff applies: `fetch` pulls fresh data and everything after 13 Nov 2026 12:00 UTC is dropped, so the
+        result must reproduce the signed forecast. Without a fetch it falls back to the frozen snapshot.
+  FULL  no cutoff: `fetch` pulls everything published up to now and the same frozen model is run on it (a look-ahead,
+        NON-BINDING; the signed forecast is never changed). Needs `fetch` first.
+The only network access is `fetch`, which contacts a fixed list of public sources (code/fetch_data.py) and writes only to
+data/agent_demo or data/agent_full. The forecast record and outputs/ are never written.
 --tag defaults to final if outputs/final exists, otherwise preview.
 Parsing is deliberately separate from run_model.py (own reading of the raw Yahoo files), so a match is a real check.
 If the run used manually entered futures prices (Bloomberg backup, es_source = manual), those prices are used.
 """
 import argparse
+import datetime as dt
 import hashlib
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -32,6 +42,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 NY = "America/New_York"
 HOLIDAYS = pd.to_datetime(["2026-11-26", "2026-12-25"])      # NYSE closures inside the horizons used here
 BRIEF_CUTOFF_UTC = "12:00"                                     # brief: 12:00 London = 12:00 UTC = 07:00 New York
+DEMO_CUT = pd.Timestamp("2026-11-13 12:00", tz="UTC")          # the real information cutoff (Demo mode with a fresh pull)
+TARGET = pd.Timestamp("2026-11-20")                            # the forecast target day
 # preset shortcuts used by the page's buttons; any value in the grammar above is accepted too
 WHATIF = {
     "drift=2000": "median drift from 2000 instead of 1990",
@@ -48,15 +60,34 @@ OPT_RE = re.compile(r"^(drift=(median|mean|none|fixed|(median|mean):(19[5-9]\d|2
 
 
 # ---------------------------------------------------------------------------------------------- data
-def ctx(tag):
+def mode_name(mode=None):
+    m = (mode or os.environ.get("DEMO_MODE") or "demo").lower()
+    return m if m in ("demo", "full") else "demo"
+
+
+def ctx(tag=None, mode=None):
+    mode = mode_name(mode)
     tag = tag or ("final" if (ROOT / "outputs" / "final" / "forecast_record.json").exists() else "preview")
     out = ROOT / "outputs" / tag
-    snap = ROOT / ("data/raw_final" if tag == "final" else "data/raw_live")
+    frozen = ROOT / ("data/raw_final" if tag == "final" else "data/raw_live")
+    fresh_dir = ROOT / "data" / f"agent_{mode}"
     rec_path = out / "forecast_record.json"
     rec = json.loads(rec_path.read_text(encoding="utf-8"))
     R = json.loads((out / "results.json").read_text(encoding="utf-8"))
-    cut = pd.Timestamp(rec["information_cutoff_utc"]).tz_convert("UTC")
-    return dict(tag=tag, out=out, snap=snap, rec=rec, rec_path=rec_path, R=R, cut=cut, target=pd.Timestamp(R["target_date"]))
+    ref_cut = pd.Timestamp(rec["information_cutoff_utc"]).tz_convert("UTC")
+    fresh = (fresh_dir / "manifest.json").exists() and (fresh_dir / "gspc_daily.json").exists()
+    got = None
+    if fresh:
+        got = pd.Timestamp(json.loads((fresh_dir / "manifest.json").read_text(encoding="utf-8"))["retrieved_utc"]).tz_convert("UTC")
+    if mode == "full":
+        # information up to the moment of the last fetch; the frozen snapshot is not used here
+        cut, snap = (got.floor("min") if fresh else None), fresh_dir
+    elif fresh:
+        cut, snap = DEMO_CUT, fresh_dir          # fresh pull, information cutoff applied
+    else:
+        cut, snap = ref_cut, frozen              # no fresh pull: the frozen snapshot, at the record's own cutoff
+    return dict(tag=tag, mode=mode, fresh=fresh, got=got, out=out, snap=snap, frozen=frozen, fresh_dir=fresh_dir, rec=rec, rec_path=rec_path,
+                R=R, cut=cut, ref_cut=ref_cut, same=(cut == ref_cut), target=pd.Timestamp(R["target_date"]))
 
 
 def chart(path):
@@ -84,6 +115,7 @@ def es_all(c):
     if not p.exists():
         return None
     es = chart(p)
+    es = es[(es.index.second == 0) & ~es.index.duplicated(keep="last")]     # drop the live, still-forming bar (stamped at the last tick)
     es.index = es.index + pd.Timedelta(minutes=5)            # index = bar END: a bar is usable only once it has ended
     return es
 
@@ -134,9 +166,13 @@ def parts(c, read_shift_h=0.0, e_read="12utc"):
     s, dropped = spx_series(c)
     S, last = float(s.iloc[-1]), s.index[-1]
     h = horizon(last, c["target"])
+    if h <= 0:
+        raise TargetClosed(last, S)
     nc = c["R"].get("nowcast", {})
     es, n_after = es_series(c)
-    if nc.get("es_source") == "manual" and read_shift_h == 0:
+    if es is None or len(es) == 0:
+        raise SystemExit("No futures bars at or before the cutoff in this snapshot.")
+    if nc.get("es_source") == "manual" and read_shift_h == 0 and c["same"] and not c["fresh"]:
         # Bloomberg backup: the run used two prices typed in by a member; use them, and the run's average overnight move
         p0, p1 = float(nc["es_close_prev_session"]), float(nc["es_at_cutoff"])
         t0, t1 = "16:00 New York (manual entry)", f"cutoff ({nc.get('es_bar_end_used', 'manual')})"
@@ -147,8 +183,14 @@ def parts(c, read_shift_h=0.0, e_read="12utc"):
         p1, t1 = es_at(es, c["cut"] - pd.Timedelta(hours=read_shift_h))
         e, n_e = overnight_mean(s, es, c["cut"], e_read, read_shift_h)
         src = "yahoo"
+    stale_h = (c["cut"] - es.index[-1]).total_seconds() / 3600 if src == "yahoo" else 0.0
     return dict(s=s, S=S, last=last, h=h, p0=p0, t0=t0, p1=p1, t1=t1, g=np.log(p1 / p0), e=e, n_e=n_e,
-                m0=drift(s, h), dropped=dropped, n_after=n_after, src=src, es=es)
+                m0=drift(s, h), dropped=dropped, n_after=n_after, src=src, es=es, stale_h=stale_h)
+
+
+class TargetClosed(Exception):
+    def __init__(self, last, S):
+        self.last, self.S = last, S
 
 
 def f2(x):
@@ -164,6 +206,23 @@ def nyt(t):
 
 
 # ---------------------------------------------------------------------------------------------- commands
+def banner(c):
+    if c["mode"] == "full":
+        return (f"MODE: FULL - all data up to {c['cut']:%a %d %b %H:%M} UTC (fresh pull {c['got']:%d %b %H:%M:%S} UTC). "
+                "No information cutoff: a look-ahead, NON-BINDING, the signed forecast is unchanged.")
+    if c["fresh"]:
+        return (f"MODE: DEMO - fresh pull {c['got']:%d %b %H:%M:%S} UTC, information cutoff {c['cut']:%a %d %b %H:%M} UTC applied "
+                "(later rows are dropped).")
+    return f"MODE: DEMO - frozen snapshot (no fresh pull yet; `fetch` makes one), cutoff {c['cut']:%a %d %b %H:%M} UTC."
+
+
+def vs(c, mine, ref, tol):
+    """MATCH / DIFFERS against the reference record when the cutoff is the same; otherwise just the (expected) gap."""
+    if c["same"]:
+        return ok(mine, ref, tol)
+    return f"differs by {mine - ref:+.4f} (expected: this run's cutoff is not the {c['tag']} record's)"
+
+
 def cmd_record(c):
     rec, p = c["rec"], parts(c)
     sha = hashlib.sha256(c["rec_path"].read_bytes()).hexdigest()
@@ -171,35 +230,80 @@ def cmd_record(c):
     files = man["files"]
     files = files if isinstance(files, list) else [dict(name=k, **v) for k, v in files.items()]
     got = {f["name"]: f.get("retrieved_utc", man.get("retrieved_utc")) for f in files if f["name"] in ("gspc_daily.json", "es_5m.json")}
-    print(f"Record ({c['tag']}): forecast {f2(rec['forecast'])}, status '{rec.get('status', '')}', sha256 {sha[:12]}...")
-    print(f"Target: {rec['target']}. Cutoff in the record: {c['cut']:%a %d %b %Y %H:%M} UTC ({c['cut'].tz_convert(NY):%H:%M} New York).")
-    rule = "MATCH" if f"{c['cut']:%H:%M}" == BRIEF_CUTOFF_UTC else f"DIFFERS: the brief's cutoff is {BRIEF_CUTOFF_UTC} UTC (07:00 New York)"
+    print(banner(c))
+    print(f"Reference record ({c['tag']}): forecast {f2(rec['forecast'])}, status '{rec.get('status', '')}', sha256 {sha[:12]}...")
+    print(f"Target: {rec['target']}. Cutoff in the record: {c['ref_cut']:%a %d %b %Y %H:%M} UTC ({c['ref_cut'].tz_convert(NY):%H:%M} New York).")
+    rule = "MATCH" if f"{c['ref_cut']:%H:%M}" == BRIEF_CUTOFF_UTC else f"DIFFERS: the brief's cutoff is {BRIEF_CUTOFF_UTC} UTC (07:00 New York)"
     print(f"  brief's rule, cutoff at {BRIEF_CUTOFF_UTC} UTC: {rule}")
-    print(f"Snapshot retrieved: S&P {got.get('gspc_daily.json')}, futures {got.get('es_5m.json')} (after the cutoff, so later rows are dropped).")
-    print(f"Last usable S&P close: {p['last']:%a %d %b} = {f2(p['S'])}; later daily rows dropped: {len(p['dropped'])}. Horizon h = {p['h']} sessions.")
+    if not c["same"]:
+        print(f"  this run's cutoff ({c['cut']:%a %d %b %H:%M} UTC) is not the record's, so its numbers can differ from the record by design.")
+    print(f"Data retrieved: S&P {got.get('gspc_daily.json')}, futures {got.get('es_5m.json')} "
+          f"({'fresh pull' if c['fresh'] else 'frozen snapshot'}).")
+    why = "after the cutoff, dropped" if c["mode"] == "demo" else "not yet closed, dropped"
+    print(f"Last usable S&P close: {p['last']:%a %d %b} = {f2(p['S'])}; later daily rows dropped ({why}): {len(p['dropped'])}. Horizon h = {p['h']} sessions.")
     if "last_usable_close" in rec:
-        print(f"  record's last close {f2(rec['last_usable_close'])} vs raw file {f2(p['S'])}: {ok(rec['last_usable_close'], p['S'], 0.005)}")
+        pr = parts(record_cut(c))
+        print(f"  record's last close {f2(rec['last_usable_close'])} vs raw file at the record's cutoff {f2(pr['S'])}: {ok(rec['last_usable_close'], pr['S'], 0.005)}")
     if p["src"] == "manual":
         print(f"Futures used: MANUAL ENTRY {f2(p['p0'])} -> {f2(p['p1'])} ({p['t1']}); Yahoo bars not used for the forecast.")
     else:
         print(f"Futures used: {f2(p['p0'])} at {nyt(p['t0'])} (cash close) -> {f2(p['p1'])} at {nyt(p['t1'])} (last bar ended by the cutoff); {p['n_after']} later bars dropped.")
+        if p["stale_h"] > 2:
+            print(f"  WARNING: the last futures bar is {p['stale_h']:.1f} h before the cutoff; the futures move may be stale.")
+
+
+def record_cut(c):
+    """The same snapshot, cut at the record's own cutoff: what the record can be reproduced from."""
+    return dict(c, cut=c["ref_cut"], same=True)
+
+
+def tolerances(c):
+    # a later pull sees a shorter 60-day futures window, so the average overnight move (and the forecast) can move in the 4th decimal
+    return (0.5, 0.005) if c["fresh"] else (0.01, 1e-4)
 
 
 def cmd_recompute(c):
-    R, rec, p = c["R"], c["rec"], parts(c)
+    R, rec = c["R"], c["rec"]
     nc = R["nowcast"]
-    F = p["S"] * np.exp(p["m0"] + p["g"] - p["e"])
-    print(f"Separate recalculation from the raw files (not run_model.py), tag {c['tag']}:")
-    print(f"  last close     {f2(p['S'])}  vs pipeline {f2(R['last_close'])}: {ok(p['S'], R['last_close'], 0.005)}")
-    print(f"  drift (median {p['h']}-session return since {p['s'].index[0].year})  {100 * p['m0']:.4f}%  vs {R['m0_pct']:.4f}%: {ok(100 * p['m0'], R['m0_pct'], 1e-4)}")
-    print(f"  futures move ({p['src']})  {100 * p['g']:+.4f}%  vs {nc['overnight_return_pct']:+.4f}%: {ok(100 * p['g'], nc['overnight_return_pct'], 1e-4)}")
-    print(f"  average overnight move ({p['n_e']} nights, read at 12:00 UTC)  {100 * p['e']:.4f}%  vs {nc['mean_overnight_drift_pct']:.4f}%: {ok(100 * p['e'], nc['mean_overnight_drift_pct'], 1e-4)}")
-    print(f"  forecast {f2(p['S'])} x exp({100 * p['m0']:.4f}% {100 * (p['g'] - p['e']):+.4f}%) = {f2(F)}  vs record {f2(rec['forecast'])}: {ok(F, rec['forecast'], 0.01)}")
-    print(f"  for comparison: no change {f2(p['S'])}; drift only {f2(p['S'] * np.exp(p['m0']))}")
+    rc = record_cut(c)
+    pr = parts(rc)
+    tol_f, tol_e = tolerances(c)
+    F = pr["S"] * np.exp(pr["m0"] + pr["g"] - pr["e"])
+    print(banner(c))
+    print(f"A. Reproducing the {c['tag']} record (its cutoff {c['ref_cut']:%a %d %b %H:%M} UTC) separately from the raw files, not run_model.py:")
+    print(f"  last close     {f2(pr['S'])}  vs pipeline {f2(R['last_close'])}: {ok(pr['S'], R['last_close'], 0.005)}")
+    print(f"  drift (median {pr['h']}-session return since {pr['s'].index[0].year})  {100 * pr['m0']:.4f}%  vs {R['m0_pct']:.4f}%: {ok(100 * pr['m0'], R['m0_pct'], 1e-4)}")
+    print(f"  futures move ({pr['src']})  {100 * pr['g']:+.4f}%  vs {nc['overnight_return_pct']:+.4f}%: {ok(100 * pr['g'], nc['overnight_return_pct'], 1e-4)}")
+    print(f"  average overnight move ({pr['n_e']} nights, read at 12:00 UTC)  {100 * pr['e']:.4f}%  vs {nc['mean_overnight_drift_pct']:.4f}%: {ok(100 * pr['e'], nc['mean_overnight_drift_pct'], tol_e)}")
+    print(f"  forecast {f2(pr['S'])} x exp({100 * pr['m0']:.4f}% {100 * (pr['g'] - pr['e']):+.4f}%) = {f2(F)}  vs record {f2(rec['forecast'])}: {ok(F, rec['forecast'], tol_f)}")
+    if c["fresh"]:
+        print(f"  (tolerance {tol_f} points / {tol_e} pp on the overnight average: Yahoo serves only ~60 days of 5-minute bars, so a pull made later sees "
+              f"{pr['n_e']} nights where the record's run saw {nc.get('n_days_validation', '?')}.)")
+    print(f"  for comparison: no change {f2(pr['S'])}; drift only {f2(pr['S'] * np.exp(pr['m0']))}")
+    if pr["stale_h"] > 2:
+        print(f"  WARNING: the last futures bar is {pr['stale_h']:.1f} h before the cutoff; the futures move may be stale.")
+    if not c["same"]:
+        p = parts(c)
+        F2 = p["S"] * np.exp(p["m0"] + p["g"] - p["e"])
+        what = ("ALL data to now: a look-ahead, NON-BINDING" if c["mode"] == "full"
+                else f"the information cutoff {c['cut']:%a %d %b %H:%M} UTC: no signed record exists for it yet")
+        print(f"B. The same frozen model at {what}:")
+        print(f"  last close {f2(p['S'])} ({p['last']:%a %d %b}), drift {100 * p['m0']:.4f}% (h={p['h']}), futures move {100 * p['g']:+.4f}%, "
+              f"average overnight move {100 * p['e']:.4f}% ({p['n_e']} nights)")
+        print(f"  forecast {f2(F2)}  ({F2 - rec['forecast']:+.2f} points vs the {c['tag']} record {f2(rec['forecast'])}, which was made at an earlier cutoff)")
+        if p["stale_h"] > 2:
+            print(f"  WARNING: the last futures bar is {p['stale_h']:.1f} h before this cutoff; the futures move may be stale.")
+        if abs(p["g"]) > 0.03:
+            print("  WARNING: the futures move is over 3%; a contract roll or a bad bar is possible.")
 
 
 def cmd_check(c):
-    r = subprocess.run([sys.executable, str(ROOT / "code" / "independent_check.py"), "--snapshot", str(c["snap"].relative_to(ROOT)), "--tag", c["tag"]],
+    if c["mode"] == "full":
+        print("check is not available in Full mode: independent_check.py re-tests one frozen, cutoff-bound run. Use recompute and compare instead.")
+        return
+    print(banner(c))
+    print(f"independent_check.py runs on the record's own frozen snapshot ({c['frozen'].name}); `compare` tests the fresh pull against it.")
+    r = subprocess.run([sys.executable, str(ROOT / "code" / "independent_check.py"), "--snapshot", str(c["frozen"].relative_to(ROOT)), "--tag", c["tag"]],
                        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         print(f"independent_check.py FAILED (exit {r.returncode}):\n{r.stdout[-800:]}{r.stderr[-800:]}")
@@ -216,13 +320,14 @@ def cmd_check(c):
 
 
 def cmd_data(c, which):
+    print(banner(c))
     if which == "spx":
         full = chart(c["snap"] / "gspc_daily.json")
         full.index = full.index.tz_convert(NY).normalize().tz_localize(None)
         print(f"S&P 500 daily closes (Yahoo ^GSPC), a close counts once 16:00 New York has passed; cutoff {c['cut']:%d %b %H:%M} UTC:")
         for d, v in full.tail(6).items():
             used = ny16(d) <= c["cut"]
-            print(f"  {d:%a %d %b}  {f2(v)}  {'used' if used else 'AFTER CUTOFF, dropped'}")
+            print(f"  {d:%a %d %b}  {f2(v)}  {'used' if used else ('AFTER CUTOFF, dropped' if c['mode'] == 'demo' else 'not yet closed, dropped')}")
     elif which == "es":
         es = es_all(c)
         if es is None:
@@ -278,6 +383,7 @@ def cmd_whatif(c, opts):
         print(f"Not understood: {' '.join(bad) or '(nothing)'}. Use one or more of: drift=median|median:<year>|mean|mean:<year>|none|fixed|<x>% ; "
               "futures=none|HH:MM ; overnight=12utc|07:00|none ; close=<points>. Presets: " + ", ".join(WHATIF))
         return
+    print(banner(c))
     p = parts(c)
     base = p["S"] * np.exp(p["m0"] + p["g"] - p["e"])
     S, m, g, e, notes = p["S"], p["m0"], p["g"], p["e"], []
@@ -325,17 +431,121 @@ def cmd_whatif(c, opts):
     print(f"  close {f2(S)}, drift {100 * m:.3f}% (was {100 * p['m0']:.3f}%), futures nowcast {100 * (g - e):+.3f}% (was {100 * (p['g'] - p['e']):+.3f}%)")
     rec_f = c["rec"]["forecast"]
     print(f"  forecast {f2(F)} vs this tool's baseline recalculation {f2(base)}: {F - base:+.2f} points ({100 * (F / base - 1):+.2f}%).")
-    print(f"  the record says {f2(rec_f)}{'' if abs(rec_f - base) < 0.01 else ' (DIFFERS from the baseline recalculation)'}; the record is not changed.")
+    if c["same"]:
+        print(f"  the record says {f2(rec_f)}{'' if abs(rec_f - base) < 0.01 else ' (DIFFERS from the baseline recalculation)'}; the record is not changed.")
+    else:
+        print(f"  the {c['tag']} record ({f2(rec_f)}) was made at a different cutoff, so it is not comparable; it is not changed.")
+
+
+def raw_daily(snap):
+    s = chart(snap / "gspc_daily.json")
+    s.index = s.index.tz_convert(NY).normalize().tz_localize(None)
+    return s
+
+
+def cmd_fetch(c):
+    d = c["fresh_dir"]
+    prev = c["got"]
+    print(f"Fetching fresh public data for {c['mode'].upper()} mode into {d.relative_to(ROOT).as_posix()}/ "
+          f"(Yahoo ^GSPC daily, Yahoo ES=F 5-minute bars, Cboe SPX history; nothing else is contacted).")
+    try:
+        r = subprocess.run([sys.executable, str(ROOT / "code" / "fetch_data.py"), "--out", str(d.relative_to(ROOT)), "--quick"],
+                           cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=150)
+        bad = r.returncode != 0
+        tail = (r.stdout + r.stderr).strip().splitlines()[-2:]
+    except subprocess.TimeoutExpired:
+        bad, tail = True, ["timed out after 150 s"]
+    if bad:
+        print("FETCH FAILED: " + " | ".join(tail))
+        keep = f"the previous fresh pull of {prev:%d %b %H:%M} UTC is still in place" if prev is not None else \
+            "the frozen snapshot is used (Demo mode); Full mode has no data"
+        print(f"  Fallback: {keep}.")
+        return
+    c2 = ctx(c["tag"], c["mode"])
+    print(banner(c2))
+    man = json.loads((d / "manifest.json").read_text(encoding="utf-8"))["files"]
+    for n, f in man.items():
+        if n in ("gspc_daily.json", "es_5m.json", "check_cboe_spx.csv"):
+            print(f"  saved {n}: {f['bytes']:,} bytes, sha256 {f['sha256'][:10]}..., {f['retrieved_utc']}")
+    s, dropped = spx_series(c2)
+    es, n_after = es_series(c2)
+    print(f"Latest S&P close usable: {s.index[-1]:%a %d %b %Y} = {f2(float(s.iloc[-1]))}; rows dropped by the cutoff: {len(dropped)}.")
+    print(f"Latest futures bar usable: ended {nyt(es.index[-1])} = {f2(float(es.iloc[-1]))}; bars dropped by the cutoff: {n_after}.")
+    if c2["mode"] == "demo":
+        print(f"The cutoff is {DEMO_CUT:%a %d %b %Y %H:%M} UTC ({DEMO_CUT.tz_convert(NY):%H:%M} New York); anything published later cannot reach the forecast.")
+
+
+def cmd_compare(c):
+    print(banner(c))
+    if not c["fresh"]:
+        print("No fresh pull in this mode yet. Run `fetch` first."); return
+    fz = c["frozen"]
+    a, b = raw_daily(c["fresh_dir"]), raw_daily(fz)
+    b = b.loc[[d for d in b.index if ny16(d) <= c["ref_cut"]]]
+    common = b.index.intersection(a.index)
+    diff = (a.loc[common] - b.loc[common]).abs()
+    miss = [d for d in b.index if d not in a.index]
+    where = "" if diff.max() < 0.005 else " on " + format(diff.idxmax(), "%d %b %Y")
+    print(f"Fresh pull vs the frozen snapshot ({fz.name}), S&P closes up to the record's cutoff: {len(common):,} common days, "
+          f"{int((diff > 0.005).sum())} differ by more than 0.005, largest {diff.max():.2f} points{where}; {len(miss)} frozen days missing in the fresh pull.")
+    for d, v in diff[diff > 0.005].tail(5).items():
+        print(f"    {d:%d %b %Y}: fresh {f2(a.loc[d])} vs frozen {f2(b.loc[d])}")
+    ef, eo = es_all(dict(c, snap=c["fresh_dir"])), es_all(dict(c, snap=fz))
+    if ef is not None and eo is not None:
+        eo = eo[eo.index <= c["ref_cut"]]
+        cm = eo.index.intersection(ef.index)
+        d2 = (ef.loc[cm] - eo.loc[cm]).abs()
+        print(f"  futures bars up to the cutoff: {len(cm):,} common 5-minute bars, {int((d2 > 0.01).sum())} differ, largest {d2.max():.2f} points; "
+              f"{int((~eo.index.isin(ef.index)).sum())} frozen bars are absent from the fresh pull (older than Yahoo's 60-day window).")
+    if c["mode"] != "full":
+        n_post = sum(1 for d in a.index if ny16(d) > c["cut"])
+        print(f"Rows published after the cutoff were dropped before use (Demo mode): {n_post} S&P rows. Full mode shows what the later data says.")
+        return
+    post = a[[ny16(d) > c["ref_cut"] and ny16(d) <= c["cut"] for d in a.index]]
+    print(f"Since the cutoff ({c['ref_cut']:%a %d %b %H:%M} UTC): {len(post)} new official S&P closes" +
+          (": " + ", ".join(f"{d:%d %b} {f2(v)}" for d, v in post.items()) if len(post) else "."))
+    fr = c["rec"]["forecast"]
+    try:
+        p_now = parts(c)
+    except TargetClosed:
+        tgt = c["target"]
+        if tgt in a.index:
+            real = float(a.loc[tgt])
+            print(f"Target {tgt:%a %d %b %Y} has closed: Yahoo close {f2(real)}; the {c['tag']} record forecast {f2(fr)} -> error {fr - real:+.2f} points ({100 * (fr / real - 1):+.3f}%).")
+            print("  (Yahoo's close, not yet checked against S&P Dow Jones Indices.)")
+        return
+    F_now = p_now["S"] * np.exp(p_now["m0"] + p_now["g"] - p_now["e"])
+    print(f"The same frozen model on all data to now: {F_now:,.2f} (last close {f2(p_now['S'])} {p_now['last']:%a %d %b}, h={p_now['h']} sessions, "
+          f"futures {100 * p_now['g']:+.3f}% since the last close, drift {100 * p_now['m0']:.3f}%). A look-ahead, not a forecast that can be submitted.")
+    print(f"  gap to the signed forecast: {F_now - fr:+.2f} points ({100 * (F_now / fr - 1):+.2f}%).")
+    ny = c["cut"].tz_convert(NY)
+    if ny.weekday() < 5 and not (ny.hour < 8):
+        print("  note: the pull is after the US open, so the futures move runs past 07:00 New York and the subtracted overnight average fits less well.")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["record", "recompute", "check", "data", "explain", "whatif"])
+    ap.add_argument("cmd", choices=["fetch", "compare", "record", "recompute", "check", "data", "explain", "whatif"])
+    ap.add_argument("--mode", choices=["demo", "full"], help="demo: information cutoff applies; full: all data to now (default: env DEMO_MODE, else demo)")
     ap.add_argument("args", nargs="*", help="for data: spx|es; for explain: an item; for whatif: one or more changes")
     ap.add_argument("--tag", choices=["final", "preview", "rehearsal"])
     a = ap.parse_args()
-    c = ctx(a.tag)
-    if a.cmd == "record":
+    c = ctx(a.tag, a.mode)
+    if c["mode"] == "full" and not c["fresh"] and a.cmd not in ("fetch", "explain"):
+        print("FULL mode has no data yet. Run first: python code/demo_tools.py fetch")
+        return
+    try:
+        run_cmd(a, c)
+    except TargetClosed as e:
+        print(f"The target day has already closed (last close {e.last:%a %d %b %Y} = {f2(e.S)}); there is no forecast horizon left. `compare` scores the record.")
+
+
+def run_cmd(a, c):
+    if a.cmd == "fetch":
+        cmd_fetch(c)
+    elif a.cmd == "compare":
+        cmd_compare(c)
+    elif a.cmd == "record":
         cmd_record(c)
     elif a.cmd == "recompute":
         cmd_recompute(c)
