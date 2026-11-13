@@ -241,6 +241,24 @@ def slide_charts(out, R, GT):
     return figs / "slide_screen.png", figs / "slide_futures.png"
 
 
+
+def why_failed(r, short=False):
+    """Why a screened factor failed the pre-registered rule (agent/AGENT_INSTRUCTIONS.md, step 5), from the screen's own numbers."""
+    share, tl = r["fitted_sign_share_pos"], r["t_long_valid"]
+    right = None if pd.isna(share) else (share if r["expected_sign"] > 0 else 1 - share)
+    why = []
+    if right is not None and right <= 0.7:
+        why.append(("wrong sign" if short else "fitted sign opposite to the one fixed in advance") if right < 0.3 else "unstable sign")
+    if pd.isna(tl):
+        if r["t_valid"] < 2.33:
+            why.append("no 2000-12 history, so below the 2.33 bar")
+    else:
+        if tl < 0:
+            why.append(f"contradicted by 2000-12 history (t {tl:.2f})")
+        if r["t_valid"] < 1.65:
+            why.append("below the 1.65 bar")
+    return "; ".join(why) or "failed the pre-registered rule"
+
 def build(tag: str):
     out = ROOT / "outputs" / tag
     R = json.loads((out / "results.json").read_text(encoding="utf-8"))
@@ -307,7 +325,7 @@ def build(tag: str):
 
     # 2 ------------------------------------------------------------------ the evidence: what predicts and what does not
     s = Slide(WHITE, f"[{who('Antonio')} - 1:40] What predicts a six-session S&P move? We tested {ncand} factors with economic signs fixed in advance: yields, the dollar, gold, semiconductors, surprises, inflation, trend, reversal and VIX. "
-                     f"Each had to beat median drift out of sample, with a Diebold-Mariano t of at least 1.65 and support from 2000-2012 history. None passed: the best, {top['label']} (t {f(top['t_valid'],2)}), is contradicted by history. "
+                     f"Each had to beat median drift out of sample, with its sign fixed in advance and a Diebold-Mariano t of at least 1.65 with support from 2000-2012 history, or 2.33 without it. None passed: the best, {top['label']} (t {f(top['t_valid'],2)}), failed: {why_failed(top)}. "
                      f"The group's {gS['tests']} pre-registered tests and the 1.72-million-combination search agree. Drift itself is only a weak edge over 'no change' (t {f(b1['DM_t_vs_B0'] or 0,2)}). "
                      f"The one input that adds information is the overnight futures move: in my pre-registered test on Bloomberg 07:00 prices it cut six-day error from {f(gB['mape_drift'],3)}% to {f(gB['mape_futures'],3)}% "
                      f"({gB['n']} origins, t {f(gB['t'],2)}; Thursdays t {f(gB['thu_t'],2)}), and Jayen's {gJ['n']}-origin test shows it carries through almost one for one (slope {f(gJ['slope'],2)}). Hand over to {who('Jayen')}.")
@@ -316,7 +334,7 @@ def build(tag: str):
     s.image(img_fut, 7.15, 1.25, 5.65)
     s.rect(7.15, 4.85, 5.65, 2.05, fill=TINT, r=0.2)
     s.text(7.4, 4.95, 5.2, 1.9, [{"text": f"0 of {ncand} factors pass", "size": 20, "bold": True, "color": NAVY, "after": 4},
-                                 {"text": f"Best: {top['label']}, t {f(top['t_valid'],2)}, reversed by 2000-12 history. Drift vs no change: t {f(b1['DM_t_vs_B0'] or 0,2)}, a weak edge.", "size": 15, "after": 4},
+                                 {"text": f"Best: {top['label']}, t {f(top['t_valid'],2)}: {why_failed(top, short=True)}. Drift vs no change: t {f(b1['DM_t_vs_B0'] or 0,2)}, a weak edge.", "size": 15, "after": 4},
                                  {"text": f"Group checks agree: {gS['tests']} pre-registered tests, 1.72M-combination search.", "size": 15}], 15, INK)
     s.text(0.7, 6.15, 6.2, 0.8, f"Screen: weekly origins {W_['first_origin'][:4]}-{W_['last_origin'][:4]}, validation to {W_['valid_end'][:4]}, then {W_['n_test']} untouched test weeks.", 14, MUTED)
     S.append(s)
@@ -479,7 +497,7 @@ def build(tag: str):
 
 
 SCRIPT_QA = [
-    ("You tested many factors. Why is none in the model? (Antonio)", "We fixed a rule before looking: a factor must beat median drift out of sample (t at least 1.65, supported by 2000-2012 history, or 2.33 without it). The best t was {tbest}, and history contradicted it. With 16 tests, one false positive at 1.65 is expected by chance."),
+    ("You tested many factors. Why is none in the model? (Antonio)", "We fixed a rule before looking: a factor must beat median drift out of sample (t at least 1.65, supported by 2000-2012 history, or 2.33 without it). The best t was {tbest}, but it failed: {why}. With 16 tests, one false positive at 1.65 is expected by chance."),
     ("What role did the group's supporting dataset play? (Antonio)", "A helper: it supplied extra macro candidates for the factor screen (2Y, 10Y, USD, gold, semiconductors, surprise index, CPI, PPI) and a tie-breaker when Yahoo and Cboe disagreed. It is not an input to the forecast, which uses public data only."),
     ("How does the latest news affect the forecast? (Jayen)", "Through prices: the futures price at the cutoff already reflects everything known by then (CPI, Fed speakers, earnings). We add no hand adjustment because it could not be validated. Scheduled events after the cutoff widen the interval."),
     ("Why median regression and median drift? (Jayen)", "The score is linear in absolute percentage error, and the optimal point forecast under absolute error is the median (Gneiting 2011)."),
@@ -507,7 +525,8 @@ def main():
     to_pdf(S, ROOT / "report" / f"slides_{tag}.pdf", title)
     fs = {r["variant"]: r for r in R["final_sensitivity"]}
     F = R["forecast_final"]; nonc = fs["No futures nowcast"]["forecast"]; nodr = fs["No drift (unchanged centre)"]["forecast"]
-    tbest = max(r["t_valid"] for r in R["screen"] if r["t_valid"] is not None)   # macro rows are blank without the workbook
+    best = max((r for r in R["screen"] if r["t_valid"] is not None), key=lambda r: r["t_valid"])   # macro rows are blank without the workbook
+    tbest = best["t_valid"]   # macro rows are blank without the workbook
     head = ("5 slides, 7 minutes talking and 3 minutes of questions. Every member presents their own part; timings are in brackets."
             + (" Slide 6 is used at the start of the questions for the live agent demo (about 1 to 2 minutes); it adds to the recorded run on slide 4." if len(S) > 5 else ""))
     lines = [f"# Speaker script and Q&A ({tag} build)", "", head, ""]
@@ -516,7 +535,7 @@ def main():
     lines += ["## Likely questions (who answers)"]
     qa = SCRIPT_QA + (SCRIPT_QA_DEMO if len(S) > 5 else [])
     for q, a in qa:
-        lines += [f"**{q}**", a.format(tbest=f(tbest, 2), nonc=f(nonc, 2), ncd=sgn(nonc - F, 1), nodr=f(nodr, 2), drd=sgn(nodr - F, 1)), ""]
+        lines += [f"**{q}**", a.format(tbest=f(tbest, 2), why=why_failed(pd.Series(best)), nonc=f(nonc, 2), ncd=sgn(nonc - F, 1), nodr=f(nodr, 2), drd=sgn(nodr - F, 1)), ""]
     (ROOT / "report" / f"speaker_script_{tag}.md").write_text("\n".join(lines), encoding="utf-8")
     print("slides written:", len(S))
 
