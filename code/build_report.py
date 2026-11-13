@@ -125,7 +125,7 @@ def build(tag: str):
         f"The best-ranked candidate alone scored {f(top['MAPE_%'],3)}%.",
         f"**News enters through prices, not opinion.** The 07:00 New York futures price reflects the latest data, Fed and earnings news. In the group's pre-registered test on Bloomberg prices it cut six-session error from "
         f"{f(gB['mape_drift'],3)}% to {f(gB['mape_futures'],3)}% ({gB['n']} origins, t {f(gB['t'],2)}); a second test over {gJ['n']} origins finds the move carries through about one for one (slope {f(gJ['slope'],2)}).",
-        f"**Accuracy is mostly luck.** Typical error is {f(fin['median_APE_%'],1)}% (score about {f(fin['mean_score'],1)}/50); we claim a well-centred, reproducible number, not foresight."], True))
+        f"**Accuracy is mostly luck.** Median test error is {f(fin['median_APE_%'],1)}% (score about {f(50 - 5 * fin['median_APE_%'],1)}/50); average {f(fin['MAPE_%'],1)}% ({f(fin['mean_score'],1)}/50); we claim a well-centred, reproducible number, not foresight."], True))
     if not final and reh:
         B.append(("p", f"**Rehearsal result (a failure, reported).** With information to {cut_s} the pipeline forecast {f(F)} for {tgt}; the index closed at {f(reh)}. Error {f(R['rehearsal_APE_%'],2)}% "
                        f"(score {f(max(0, 50-5*R['rehearsal_APE_%']),2)}) against {f(R['rehearsal_APE_unchanged_%'],2)}% for unchanged and {f(R['rehearsal_APE_B1_%'],2)}% for median drift: the futures nowcast ({sgn(nc['nowcast_adjustment_pct'],2)}%) "
@@ -209,7 +209,7 @@ def build(tag: str):
     # ------------------------------------------------------------------ 5 agent
     B.append(("h1", "5. Agent architecture and modelling", True))
     B.append(("fig", out / "figures" / "fig1_workflow.png", 16.0, "Figure 1. Labelled agent workflow: goal, data, tools, agent decisions, checks and human responsibility.", True))
-    B.append(("p", "**Agent.** Claude Code (Claude Sonnet 5.5) may read public data, run Python and write files; it cannot trade or submit. It retrieved the raw files, called Python to screen factors and fit models, applied the pre-registered rule and logged each decision in `agent_log.md`. "
+    B.append(("p", "**Agent.** Claude Code (Claude Sonnet 5.5, later Opus 5.5) may read public data, run Python and write files; it cannot trade or submit. It retrieved the raw files, called Python to screen factors and fit models, applied the pre-registered rule and logged each decision in `agent_log.md`. "
                    "Members re-run the code, read the trace and approve the record."
                    + (" The agent's own check of the record (plan, tool calls, verdict) is saved in agent/demo_runs/." if list((ROOT / "agent" / "demo_runs").glob("*_check*.jsonl")) else ""), True))
     B.append(("bullets", [
@@ -311,7 +311,7 @@ def build(tag: str):
     B.append(("h1", "References", False))
     refs = [
         "Campbell, J.Y. and Thompson, S.B. (2008) 'Predicting excess stock returns out of sample: can anything beat the historical average?', *Review of Financial Studies*, 21(4), pp. 1509-1531.",
-        "Cboe Global Markets (2026) *Cboe Volatility Index mathematics methodology* and daily history files. https://cdn.cboe.com/api/global/us_indices/daily_prices/ (accessed 10 Nov 2026).",
+        "Cboe Global Markets (2026) *Cboe Volatility Index mathematics methodology* and daily history files. https://cdn.cboe.com/api/global/us_indices/daily_prices/ (accessed " + pd.Timestamp(man['files']['check_cboe_spx.csv']['retrieved_utc'][:10]).strftime('%d %b %Y').lstrip('0') + ").",
         "Diebold, F.X. and Mariano, R.S. (1995) 'Comparing predictive accuracy', *Journal of Business & Economic Statistics*, 13(3), pp. 253-263.",
         "[Gneiting] Gneiting, T. (2011) 'Making and evaluating point forecasts', *Journal of the American Statistical Association*, 106(494), pp. 746-762.",
         "[Hamao] Hamao, Y., Masulis, R.W. and Ng, V. (1990) 'Correlations in price changes and volatility across international stock markets', *Review of Financial Studies*, 3(2), pp. 281-307.",
@@ -324,13 +324,13 @@ def build(tag: str):
         "S&P Dow Jones Indices (2026) *S&P 500*. https://www.spglobal.com/spdji/en/indices/equity/sp-500/ ; U.S. Department of the Treasury (2026) *Daily Treasury par yield curve rates*. https://home.treasury.gov/ ; Yahoo Finance (2026) chart API (^GSPC, ^VIX, ES=F, ^TNX, ^IRX, DX-Y.NYB, GC=F, ^SOX).",
         "Bloomberg L.P. (2026) *ES1 Index (E-mini S&P 500 generic first future), 1-minute bars*. Bloomberg Terminal, UCL (retrieved 3 Nov 2026; group test of the futures move, not redistributed). TradingView (2026) *ES1! hourly export*, CME Group data (retrieved 10 Nov 2026; group test, not redistributed).",
         "Board of Governors of the Federal Reserve System (2026) *FOMC calendars* and *November 2026 events*. https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm ; https://www.federalreserve.gov/newsevents/2026-november.htm",
-        "News items (all accessed 10 Nov 2026): " + "; ".join(sorted({f"{i['src']}, {i['url']}" for i in NEWS["items"] if i["url"]})),
+        ("News items (accessed 10 Nov 2026" + ("" if NEWS.get("researched_utc", "2026-11-10") <= "2026-11-10" else ", refreshed " + pd.Timestamp(NEWS["researched_utc"]).strftime("%d %b %Y").lstrip("0")) + "): ") + "; ".join(sorted({f"{i['src']}, {i['url']}" for i in NEWS["items"] if i["url"]})),
     ]
     B.append(("bullets", refs, False))
     B.append(("pagebreak",))
     B.append(("h1", "Appendix A. Evidence record (evidence only; no new analysis)", False))
-    rows = [[n_, m["role"][:80], m["url"].split("?")[0][:62], m["retrieved_utc"].replace("T", " ")[:19] + " UTC", m["sha256"][:14] + "...", f"{m['bytes']:,}"] for n_, m in man["files"].items() if n_ != "zaki_data.xlsx"]
-    B.append(("table", ["File", "Role", "URL (query omitted)", "Retrieved", "SHA-256", "Bytes"], rows, [2.5, 4.4, 4.4, 2.3, 2.3, 1.1], "A1. Raw snapshot manifest", False, {"font": 7}))
+    rows = [[n_, m["role"], m["url"].split("?")[0][:62], m["retrieved_utc"].replace("T", " ")[:19] + " UTC", m["sha256"][:14] + "...", f"{m['bytes']:,}"] for n_, m in man["files"].items() if n_ != "zaki_data.xlsx"]
+    B.append(("table", ["File", "Role", "URL (query omitted)", "Retrieved", "SHA-256", "Bytes"], rows, [2.5, 4.3, 3.9, 2.2, 2.2, 1.9], "A1. Raw snapshot manifest", False, {"font": 7}))
     B.append(("table", ["Item", "Value"], [
         ["Forecast record", f"market S&P 500 price index; unit index points; target {tgt} official close; cutoff {cut_s}; value {f(F)}"],
         ["Software", f"Python {R['package_versions']['python']}, numpy {R['package_versions']['numpy']}, pandas {R['package_versions']['pandas']}, openpyxl, statsmodels (check only), matplotlib, reportlab, python-docx, python-pptx"],

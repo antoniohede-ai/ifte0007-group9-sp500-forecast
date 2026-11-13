@@ -472,7 +472,7 @@ def build(tag: str):
                          f"Say what is live and what is fixed: the data, the tools' code and the rules are fixed; the plan, the tool choices, the numbers it computes, its words and its verdict happen live. {reh6} "
                          "If the connection fails, switch to Replay and play a saved run: the brief allows a recorded walkthrough. The agent cannot write files or change the record; a member signs.")
         s.text(0.7, 0.4, 12, 0.9, "Live in Q&A: our agent re-checks the forecast", 32, NAVY, True)
-        s.text(0.7, 1.15, 12, 0.5, "Claude Code on the frozen inputs. It plans its own check, chooses its tools and recommends. We decide.", 17, MUTED)
+        s.text(0.7, 1.15, 12, 0.62, "Claude Code on the frozen inputs. It plans its own check, chooses its tools and recommends. We decide.", 17, MUTED)
         cards = [("1  Its own check", "about 30 s", "/check: the agent writes a plan, picks its tools (record, recompute, check...), reads each result and recommends submit or not."),
                  ("2  Hidden fault", "about 40 s", f"The page plants one error in a copy of the record: forecast, last close or cutoff. Nobody knows which. Does the agent catch it? {reh6}"),
                  ("3  Your question", "about 30 s", "Ask anything about the forecast. The agent chooses its own tools and what-if values, then answers.")]
