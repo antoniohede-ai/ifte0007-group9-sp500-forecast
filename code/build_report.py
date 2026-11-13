@@ -94,6 +94,7 @@ def build(tag: str):
         "title": "A Tool-Using AI Agent Forecast of the S&P 500 Close",
         "subtitle": "Factor search on the group dataset, a pre-registered selection rule, chronological validation and the agent workflow behind one number",
         "group": [("Group", GI["group"]), ("Members", "  |  ".join(f"{m['name']}, {m['id']}" for m in GI["members"])),
+                  *([("Repository", GI["repository"])] if GI.get("repository") else []),
                   ("Build", f"{tag.upper()} run, generated {dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M} UTC from the saved snapshot")],
         "label": "BINDING FINAL POINT FORECAST" if final else f"{tag.upper()} FORECAST - NOT BINDING",
         "forecast": f(F), "unit_line": "S&P 500 price index, index points",
