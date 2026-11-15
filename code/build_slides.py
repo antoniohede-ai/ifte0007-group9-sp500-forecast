@@ -186,6 +186,7 @@ def to_pdf(slides, path, title):
 
 # ------------------------------------------------------------------------------------------- live agent demo (slide 6, Q&A)
 DEMO_UI = ROOT / "code" / "demo_ui.py"
+LIVE_QA_SLIDE = False   # group decision (Layla, 15 Nov): no live demo in the Q&A; the agent demo is the replay on slide 4
 
 
 def demo_rehearsal():
@@ -383,7 +384,7 @@ def build(tag: str):
              ("4 Decisions", "AGENT", "C9D6E3", "Applies pre-registered rules; logs every choice and correction."),
              ("5 Checks", "AGENT + HUMAN", "F2D7A7", "Second code path, leak test; humans check the S&P DJI close."),
              ("6 Approval", "HUMAN", "7FD1C0", "Members re-run, read the trace, sign the record. No trading.")]
-    demo_txt = ("AGENT DEMO (about 90 seconds): in `python code/demo_ui.py` (unzipped copy of the package), Replay the agent's saved /check on the final record (agent/demo_runs/; run it live only if time allows). "
+    demo_txt = ("AGENT DEMO (about 90 seconds): in `python code/demo_ui.py` (unzipped copy of the package), Replay the agent's saved /check on the final record (agent/demo_runs/, recorded 13 Nov; no live run). "
                 "The agent writes its own plan, chooses its tools (record, recompute, check), reads each result and recommends: point at its Plan line, one tool call and its Found, Decision and Recommendation lines. "
                 f"Then the transcript on this slide is the pipeline it checked: `python code/run_all.py --{tag}` on the frozen inputs. "
                 if (ROOT / "code" / "demo_ui.py").exists() else
@@ -423,7 +424,7 @@ def build(tag: str):
     s.text(8.35, 4.4, 4.3, 2.45, [{"text": "From agent_log.md", "size": 16, "bold": True, "color": NAVY, "after": 4},
                                   {"text": "Correction: 3 faulty Yahoo prices replaced after a Yahoo / Cboe / workbook check.", "after": 4},
                                   {"text": "Decision: model frozen after group review; the screen is reported, never acted on.", "after": 4},
-                                  {"text": "Demo (90 s): replay of the agent's /check on the final record (agent/demo_runs/); live on slide 6.", "bold": True}], 14, INK)
+                                  {"text": "Demo (90 s): replay of the agent's /check on the final record (agent/demo_runs/, recorded 13 Nov).", "bold": True}], 14, INK)
     S.append(s)
 
     # 5 ------------------------------------------------------------------ risks, counterargument, claim
@@ -434,7 +435,7 @@ def build(tag: str):
                     "Counterargument: 'an analyst would use the news'. We tested its measurable parts and none beat drift; the rest is already in the futures price. My momentum + RSI machine-learning model was also worse than drift over 22 years. "
                     "Watch list: a failed independent check, a futures roll, the last close against S&P DJI, Nvidia on 17 Nov, FOMC minutes on 18 Nov. "
                     "We claim a well-centred, reproducible forecast with honest evidence, not foresight. Questions: everyone answers on their own part (see the speaker script)."
-                    + (f" At the start of the questions, {who('Jayen')} opens slide 6 and runs the agent live (about 1 to 2 minutes)." if DEMO_UI.exists() else ""))
+                    + (f" At the start of the questions, {who('Jayen')} opens slide 6 and runs the agent live (about 1 to 2 minutes)." if LIVE_QA_SLIDE and DEMO_UI.exists() else ""))
     s.text(0.7, 0.4, 12, 0.9, "What could invalidate it, and what we claim", 32, WHITE, True)
     cards = [(("Rehearsal outcome", f"{f(RH['rehearsal_APE_%'],1)}%", f"{reh_when[0].upper() + reh_when[1:]}: {f(RH['forecast_final'],0)} vs realised {f(reh,0)}; no change missed by {f(RH['rehearsal_APE_unchanged_%'],1)}%. Reported, not retuned.") if reh else
               ("Worst test error", f"{f(worst['APE_final'],1)}%", f"{pd.Timestamp(worst['date']):%d %b %Y}: a market shock that 'no change' missed just as badly.")),
@@ -460,7 +461,7 @@ def build(tag: str):
     S.append(s)
 
     # 6 ------------------------------------------------------------------ live agent demo, used in the Q&A (only if the demo is in the package)
-    if DEMO_UI.exists():
+    if LIVE_QA_SLIDE and DEMO_UI.exists():
         drills = demo_rehearsal()
         kinds = {"forecast": "forecast", "close": "last close", "cutoff": "cutoff"}
         caught = [kinds.get(v, v) for v, ok_ in drills if ok_]
@@ -509,6 +510,12 @@ SCRIPT_QA = [
     ("What would change the forecast? (Mohamed)", "A different last close or overnight futures move. Dropping the nowcast would move it to {nonc} ({ncd} points); dropping the drift to {nodr} ({drd} points)."),
 ]
 
+SCRIPT_QA_AGENT = [   # used when there is no live Q&A slide: the agent demo is the replay on slide 4
+    ("Is the agent just running a script? (Jayen)", "No. In the /check we replayed, the agent wrote its own plan, chose which tools to call and in what order, read each result and made its own recommendation; nobody scripted those steps. Every number came from Python on the frozen files. In the saved fault drills it was not told what had been planted and caught {caught} of {drills}. What is fixed: the data, the tools' code, the goal and the brief's rules."),
+    ("Why a replay rather than a live run? (Layla)", "It is the agent's real, unedited run on the frozen final inputs on 13 Nov, saved in agent/demo_runs/: what you see is exactly what it did, and it fits inside the 7 minutes without depending on a connection. Anyone can replay it from the evidence ZIP with python code/demo_ui.py, no account needed."),
+    ("Can the agent change the forecast? (Jayen)", "No. It can read files and run code/demo_tools.py only; writing files, network commands and other programs are refused. It recommends; a member signs the record."),
+]
+
 SCRIPT_QA_DEMO = [
     ("Is the live agent just running a script? (Jayen)", "No. In /check it writes its own plan and chooses which tools to call and in what order; in Ask it also chooses the what-if values. Every number is computed by Python at that moment from the frozen files, and in the fault drill it is not told what was planted. What is fixed: the data, the tools' code, the goal and the brief's rules."),
     ("What if the live demo fails? (Jayen)", "We switch to Replay and play a saved run of the same agent on the same frozen inputs; the brief allows a recorded walkthrough. Slide 4's recorded pipeline run also stands on its own."),
@@ -534,9 +541,10 @@ def main():
     for i, s in enumerate(S, 1):
         lines += [f"## Slide {i}" + (" (Q&A: live agent demo)" if i == 6 else ""), s.notes, ""]
     lines += ["## Likely questions (who answers)"]
-    qa = SCRIPT_QA + (SCRIPT_QA_DEMO if len(S) > 5 else [])
+    qa = SCRIPT_QA + (SCRIPT_QA_DEMO if len(S) > 5 else SCRIPT_QA_AGENT if DEMO_UI.exists() else [])
+    drl = demo_rehearsal() if DEMO_UI.exists() else []
     for q, a in qa:
-        lines += [f"**{q}**", a.format(tbest=f(tbest, 2), why=why_failed(pd.Series(best)), nonc=f(nonc, 2), ncd=sgn(nonc - F, 1), nodr=f(nodr, 2), drd=sgn(nodr - F, 1)), ""]
+        lines += [f"**{q}**", a.format(caught=sum(ok_ for _, ok_ in drl), drills=len(drl), tbest=f(tbest, 2), why=why_failed(pd.Series(best)), nonc=f(nonc, 2), ncd=sgn(nonc - F, 1), nodr=f(nodr, 2), drd=sgn(nodr - F, 1)), ""]
     (ROOT / "report" / f"speaker_script_{tag}.md").write_text("\n".join(lines), encoding="utf-8")
     print("slides written:", len(S))
 
